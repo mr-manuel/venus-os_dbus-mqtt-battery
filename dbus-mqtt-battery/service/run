@@ -1,0 +1,4 @@
+#!/bin/sh
+echo "*** starting dbus-mqtt-battery ***"
+exec 2>&1
+exec /data/etc/dbus-mqtt-battery/dbus-mqtt-battery.py
