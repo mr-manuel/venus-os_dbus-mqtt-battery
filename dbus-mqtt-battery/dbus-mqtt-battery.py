@@ -203,6 +203,7 @@ def main():
     # Have a mainloop, so we can send/receive asynchronous calls to and from dbus
     DBusGMainLoop(set_as_default=True)
 
+
     # MQTT setup
     client = mqtt.Client("MqttBattery")
     client.on_disconnect = on_disconnect
@@ -235,8 +236,11 @@ def main():
     )
     client.loop_start()
 
-    # wait to receive first data, else the JSON is empty
-    time.sleep(5)
+    # wait to receive first data, else the JSON is empty and phase setup won't work
+    while battery_power == 0:
+        logging.info("Waiting 5 seconds for receiving first data...")
+        time.sleep(5)
+
 
     #formatting
     _kwh = lambda p, v: (str(round(v, 2)) + 'kWh')

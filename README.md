@@ -1,6 +1,6 @@
 # dbus-mqtt-battery - Emulates a physical PV Inverter from MQTT data
 
-<small>GitHub repository: https://github.com/mr-manuel/venus-os_dbus-mqtt-battery</small>
+<small>GitHub repository: [mr-manuel/venus-os_dbus-mqtt-battery](https://github.com/mr-manuel/venus-os_dbus-mqtt-battery)</small>
 
 ### Disclaimer
 
@@ -14,7 +14,7 @@ The script emulates a battery in Venus OS. It gets the MQTT data from a subscrib
 
 ### Config
 
-Copy or rename the `config.sample.ini` to `config.ini` in the `dbus-mqtt-grid` folder and change it as you need it.
+Copy or rename the `config.sample.ini` to `config.ini` in the `dbus-mqtt-battery` folder and change it as you need it.
 
 
 ### JSON structure
