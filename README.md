@@ -1,4 +1,4 @@
-# dbus-mqtt-battery - Emulates a physical Battery from MQTT data
+# dbus-mqtt-battery - Emulates a physical battery from MQTT data
 
 <small>GitHub repository: [mr-manuel/venus-os_dbus-mqtt-battery](https://github.com/mr-manuel/venus-os_dbus-mqtt-battery)</small>
 
