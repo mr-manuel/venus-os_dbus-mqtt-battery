@@ -19,21 +19,56 @@ Copy or rename the `config.sample.ini` to `config.ini` in the `dbus-mqtt-battery
 
 ### JSON structure
 
-<details><summary>Required data</summary>
+<details><summary>Minimum required</summary>
 
 ```json
 {
     "dc": {
-        "power": 79.6,
-        "voltage": 58.1,
-        "current": 1.4,
-        "temperature": 23
+        "power": 321.6,
+        "voltage": 52.7
     },
-    "consumed_amphours": 2.9,
-    "soc": 99,
+    "soc": 63
+}
+```
+</details>
+
+<details><summary>Full (with descriptions)</summary>
+
+Please remove the `--> *` comments to get a valid `JSON`. Comments are not allowed in `JSON` structure, but for simplicity I added them.
+
+```json
+{
+    "dc": {
+        "power": 321.6,                 --> Watt
+        "voltage": 52.7,                --> Volt
+        "current": 6.10,                --> Ampere - if empty, than calculated from "power" and "voltage"
+        "temperature": 23               --> Celsius
+    },
+    "InstalledCapacity": 200.0,         --> Ampere hours - total battery capacity
+    "ConsumedAmphours": 74.5,           --> Ampere hours - consumed
+    "Capacity": 125.5,                  --> Ampere hours - remaining - if empty, than calculated when "InstalledCapacity" and "ConsumedAmphours" are set
+    "soc": 63,                          --> Percent (0-100) - state of charge
+    "TimeToGo": 43967,                  --> Seconds - time until the battery is empty - if empty, than calculated when "Capacity" is set or calculated
+    "info": {
+        "MaxChargeVoltage": 58.4,       --> Volt - Maximum loading voltage that the MultiPlus/Quattro should use
+        "MaxChargeCurrent": 80.0,       --> Ampere - Maximum charge current that the MultiPlus/Quattro should use
+        "MaxDischargeCurrent": 120.0    --> Ampere - Maximum discharge current that the MultiPlus/Quattro should use
+    },
     "history": {
-        "voltageMin": 0,
-        "voltageMax": 0
+        "ChargeCycles": 5,              --> Number - cycles for complete battery lifetime
+        "voltageMin": 40.8,             --> Battery voltage minimum over time
+        "voltageMax": 58.4,             --> Battery voltage maximum over time
+        "TotalAhDrawn": 1057.3          --> Ampere hours - drawn ampere hours for complete battery lifetime
+    },
+    "system": {
+        "MinVoltageCellId": "C3",       --> String - ID of the cell with the lowest voltage
+        "MinCellVoltage": 3.392,        --> Volt - Of the cell with the lowest voltage
+        "MaxVoltageCellId": "C15",      --> String - ID of the cell with the highest voltage
+        "MaxCellVoltage": 3.417,        --> Volt - Of the cell with the highest voltage
+        "MinTemperatureCellId": "C2",   --> String - ID of the cell with the lowest temperature
+        "MinCellTemperature": 22.5,     --> Celsius - Of the cell with the lowest temperature
+        "MaxTemperatureCellId": "C9",   --> String - ID of the cell with the highest temperature
+        "MaxCellTemperature": 23.5      --> Celsius - Of the cell with the highest temperature
     }
 }
 ```
@@ -81,6 +116,12 @@ It was tested on following devices:
 
 ![MQTT Battery - pages](/screenshots/battery_pages.png)
 ![MQTT Battery - device list](/screenshots/battery_device_list.png)
-![MQTT Battery - device list - mqtt battery](/screenshots/battery_device_list_mqtt-battery.png)
+![MQTT Battery - device list - mqtt battery](/screenshots/battery_device_list_mqtt-battery_1.png)
+![MQTT Battery - device list - mqtt battery](/screenshots/battery_device_list_mqtt-battery_2.png)
+![MQTT Battery - device list - mqtt battery](/screenshots/battery_device_list_mqtt-battery_3.png)
+![MQTT Battery - device list - mqtt battery](/screenshots/battery_device_list_mqtt-battery_4.png)
+![MQTT Battery - device list - mqtt battery](/screenshots/battery_device_list_mqtt-battery_5.png)
+![MQTT Battery - device list - mqtt battery](/screenshots/battery_device_list_mqtt-battery_6.png)
+![MQTT Battery - device list - mqtt battery](/screenshots/battery_device_list_mqtt-battery_7.png)
 
 </details>

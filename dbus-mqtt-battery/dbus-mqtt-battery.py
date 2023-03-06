@@ -54,13 +54,32 @@ connected = 0
 battery_power = -1
 battery_voltage = 0
 battery_current = 0
-battery_temperature = 0
+battery_temperature = None
 
-battery_consumed_amphours = 0
+battery_installed_capacity = None
+battery_consumed_amphours = None
+battery_capacity = None
 battery_soc = 0
+battery_time_to_go = 0
 
-battery_voltageMin = 0
-battery_voltageMax = 0
+battery_max_charge_voltage = None
+battery_max_charge_current = None
+battery_max_discharge_current = None
+
+battery_charge_cycles = None
+battery_voltage_min = None
+battery_voltage_max = None
+battery_total_ah_drawn = None
+
+battery_total_min_voltage_cell_id = None
+battery_total_min_cell_voltage = None
+battery_total_max_voltage_cell_id = None
+battery_total_max_cell_voltage = None
+
+battery_total_min_temperature_cell_id = None
+battery_total_min_cell_temperature = None
+battery_total_max_temperature_cell_id = None
+battery_total_max_cell_temperature = None
 
 
 # MQTT requests
@@ -94,8 +113,11 @@ def on_message(client, userdata, msg):
 
         global \
             battery_power, battery_voltage, battery_current, battery_temperature, \
-            battery_consumed_amphours, battery_soc, \
-            battery_voltageMin, battery_voltageMax
+            battery_installed_capacity, battery_consumed_amphours, battery_capacity, battery_soc, battery_time_to_go, \
+            battery_max_charge_voltage, battery_max_charge_current, battery_max_discharge_current, \
+            battery_charge_cycles, battery_voltage_min, battery_voltage_max, battery_total_ah_drawn, \
+            battery_total_min_voltage_cell_id, battery_total_min_cell_voltage, battery_total_max_voltage_cell_id, battery_total_max_cell_voltage, \
+            battery_total_min_temperature_cell_id, battery_total_min_cell_temperature, battery_total_max_temperature_cell_id, battery_total_max_cell_temperature
 
         # get JSON from topic
         if msg.topic == config['MQTT']['topic_battery']:
@@ -104,14 +126,33 @@ def on_message(client, userdata, msg):
 
                 battery_power   = float(jsonpayload["dc"]["power"])
                 battery_voltage = float(jsonpayload["dc"]["voltage"])
-                battery_current = float(jsonpayload["dc"]["current"])
-                battery_temperature = float(jsonpayload["dc"]["temperature"])
+                battery_current = float(jsonpayload["dc"]["current"]) if 'current' in jsonpayload["dc"] else round( ( float( jsonpayload["dc"]["power"])/float( jsonpayload["dc"]["voltage"]) ), 2 )
+                battery_temperature = float(jsonpayload["dc"]["temperature"]) if 'current' in jsonpayload["dc"] else None
 
-                battery_consumed_amphours = float(jsonpayload["consumed_amphours"])
-                battery_soc = float(jsonpayload["soc"])
+                battery_installed_capacity = float(jsonpayload["InstalledCapacity"]) if 'InstalledCapacity' in jsonpayload else None
+                battery_consumed_amphours = float(jsonpayload["ConsumedAmphours"]) if 'ConsumedAmphours' in jsonpayload else None
+                battery_capacity = float(jsonpayload["Capacity"]) if 'Capacity' in jsonpayload else ( battery_installed_capacity - battery_consumed_amphours ) if battery_installed_capacity is not None and battery_consumed_amphours is not None else None
+                battery_soc = int(jsonpayload["soc"])
+                battery_time_to_go = int(jsonpayload["TimeToGo"]) if 'TimeToGo' in jsonpayload else round( ( battery_capacity / battery_current * 60 * 60 ), 0 ) if battery_capacity is not None else None
 
-                battery_voltageMin = float(jsonpayload["history"]["voltageMin"])
-                battery_voltageMax = float(jsonpayload["history"]["voltageMax"])
+                battery_max_charge_voltage = float(jsonpayload["info"]["MaxChargeVoltage"]) if 'history' in jsonpayload and 'MaxChargeVoltage' in jsonpayload["history"] else None
+                battery_max_charge_current = float(jsonpayload["info"]["MaxChargeCurrent"]) if 'history' in jsonpayload and 'MaxChargeCurrent' in jsonpayload["history"] else None
+                battery_max_discharge_current = float(jsonpayload["info"]["MaxDischargeCurrent"]) if 'history' in jsonpayload and 'MaxDischargeCurrent' in jsonpayload["history"] else None
+
+                battery_charge_cycles = int(jsonpayload["history"]["ChargeCycles"]) if 'history' in jsonpayload and 'ChargeCycles' in jsonpayload["history"] else None
+                battery_voltage_min = float(jsonpayload["history"]["voltageMin"]) if 'history' in jsonpayload and 'voltageMin' in jsonpayload["history"] else None
+                battery_voltage_max = float(jsonpayload["history"]["voltageMax"]) if 'history' in jsonpayload and 'voltageMax' in jsonpayload["history"] else None
+                battery_total_ah_drawn = float(jsonpayload["history"]["TotalAhDrawn"]) if 'history' in jsonpayload and 'TotalAhDrawn' in jsonpayload["history"] else None
+
+                battery_total_min_voltage_cell_id = jsonpayload["system"]["MinVoltageCellId"] if 'system' in jsonpayload and 'MinVoltageCellId' in jsonpayload["system"] else None
+                battery_total_min_cell_voltage = float(jsonpayload["system"]["MinCellVoltage"]) if 'system' in jsonpayload and 'MinCellVoltage' in jsonpayload["system"] else None
+                battery_total_max_voltage_cell_id = jsonpayload["system"]["MaxVoltageCellId"] if 'system' in jsonpayload and 'MaxVoltageCellId' in jsonpayload["system"] else None
+                battery_total_max_cell_voltage = float(jsonpayload["system"]["MaxCellVoltage"]) if 'system' in jsonpayload and 'MaxCellVoltage' in jsonpayload["system"] else None
+
+                battery_total_min_temperature_cell_id = jsonpayload["system"]["MinTemperatureCellId"] if 'system' in jsonpayload and 'MinTemperatureCellId' in jsonpayload["system"] else None
+                battery_total_min_cell_temperature = float(jsonpayload["system"]["MinCellTemperature"]) if 'system' in jsonpayload and 'MinCellTemperature' in jsonpayload["system"] else None
+                battery_total_max_temperature_cell_id = jsonpayload["system"]["MaxTemperatureCellId"] if 'system' in jsonpayload and 'MaxTemperatureCellId' in jsonpayload["system"] else None
+                battery_total_max_cell_temperature = float(jsonpayload["system"]["MaxCellTemperature"]) if 'system' in jsonpayload and 'MaxCellTemperature' in jsonpayload["system"] else None
             else:
                 logging.warning("Received JSON MQTT message was empty and therefore it was ignored")
                 logging.debug("MQTT payload: " + str(msg.payload)[1:])
@@ -151,7 +192,7 @@ class DbusMqttBatteryService:
         self._dbusservice.add_path('/ProductId', 0xFFFF)
         self._dbusservice.add_path('/ProductName', productname)
         self._dbusservice.add_path('/CustomName', productname)
-        self._dbusservice.add_path('/FirmwareVersion', '0.0.2')
+        self._dbusservice.add_path('/FirmwareVersion', '0.1.0')
         #self._dbusservice.add_path('/HardwareVersion', '')
         self._dbusservice.add_path('/Connected', 1)
 
@@ -166,13 +207,20 @@ class DbusMqttBatteryService:
 
 
     def _update(self):
-        self._dbusservice['/Dc/0/Power'] =  round(battery_power, 2) # positive: charging, negative: discharging
-        self._dbusservice['/Dc/0/Voltage'] = round(battery_voltage, 2)
-        self._dbusservice['/Dc/0/Current'] = round(battery_current, 2)
-        self._dbusservice['/Dc/0/Temperature'] = round(battery_temperature, 2)
+        self._dbusservice['/Dc/0/Power'] =  battery_power # positive: charging, negative: discharging
+        self._dbusservice['/Dc/0/Voltage'] = battery_voltage
+        self._dbusservice['/Dc/0/Current'] = battery_current
+        self._dbusservice['/Dc/0/Temperature'] = battery_temperature
 
-        self._dbusservice['/ConsumedAmphours'] = round(battery_consumed_amphours, 2)
-        self._dbusservice['/Soc'] = round(battery_soc, 2)
+        self._dbusservice['/InstalledCapacity'] = battery_installed_capacity
+        self._dbusservice['/ConsumedAmphours'] = battery_consumed_amphours
+        self._dbusservice['/Capacity'] = battery_capacity
+        self._dbusservice['/Soc'] = battery_soc
+        self._dbusservice['/TimeToGo'] = battery_time_to_go
+
+        self._dbusservice['/Info/MaxChargeVoltage'] = battery_max_charge_voltage
+        self._dbusservice['/Info/MaxChargeCurrent'] = battery_max_charge_current
+        self._dbusservice['/Info/MaxDischargeCurrent'] = battery_max_discharge_current
 
         # For all alarms: 0=OK; 1=Warning; 2=Alarm
         if battery_voltage == 0:
@@ -205,8 +253,20 @@ class DbusMqttBatteryService:
             alarm_lowsoc = 0
         self._dbusservice['/Alarms/LowSoc'] = alarm_lowsoc
 
-        self._dbusservice['/History/MinimumVoltage'] = round(battery_voltageMin, 2)
-        self._dbusservice['/History/MaximumVoltage'] = round(battery_voltageMax, 2)
+        self._dbusservice['/History/ChargeCycles'] = battery_charge_cycles
+        self._dbusservice['/History/MinimumVoltage'] = battery_voltage_min
+        self._dbusservice['/History/MaximumVoltage'] = battery_voltage_max
+        self._dbusservice['/History/TotalAhDrawn'] = battery_total_ah_drawn
+
+        self._dbusservice['/System/MinVoltageCellId'] = battery_total_min_voltage_cell_id
+        self._dbusservice['/System/MinCellVoltage'] = battery_total_min_cell_voltage
+        self._dbusservice['/System/MaxVoltageCellId'] = battery_total_max_voltage_cell_id
+        self._dbusservice['/System/MaxCellVoltage'] = battery_total_max_cell_voltage
+
+        self._dbusservice['/System/MinTemperatureCellId'] = battery_total_min_temperature_cell_id
+        self._dbusservice['/System/MinCellTemperature'] = battery_total_min_cell_temperature
+        self._dbusservice['/System/MaxTemperatureCellId'] = battery_total_max_temperature_cell_id
+        self._dbusservice['/System/MaxCellTemperature'] = battery_total_max_cell_temperature
 
         logging.debug("Battery SoC: {:.2f} V - {:.2f} %".format(battery_voltage, battery_soc))
 
@@ -284,6 +344,7 @@ def main():
     _p = lambda p, v: (str(round(v, 2)) + '%')
     _t = lambda p, v: (str(round(v, 2)) + '°C')
     _n = lambda p, v: (str(round(v, 0)))
+    _s = lambda p, v: (str(v))
 
     paths_dbus = {
         '/Dc/0/Power': {'initial': 0, 'textformat': _w},
@@ -291,14 +352,15 @@ def main():
         '/Dc/0/Current': {'initial': 0, 'textformat': _a},
         '/Dc/0/Temperature': {'initial': None, 'textformat': _t},
 
-        '/ConsumedAmphours': {'initial': 0, 'textformat': _ah},
+        '/InstalledCapacity': {'initial': None, 'textformat': _ah},
+        '/ConsumedAmphours': {'initial': None, 'textformat': _ah},
+        '/Capacity': {'initial': None, 'textformat': _ah},
         '/Soc': {'initial': 0, 'textformat': _p},
+        '/TimeToGo': {'initial': None, 'textformat': _n},
 
-        '/Info/MaxChargeCurrent': {'initial': 50, 'textformat': _a},
-        '/Info/MaxDischargeCurrent': {'initial': 50, 'textformat': _a},
-        '/Info/MaxChargeVoltage': {'initial': 15.0, 'textformat': _v},
-        '/Info/BatteryLowVoltage': {'initial': 11.5, 'textformat': _v},
-        '/Info/ChargeRequest': {'initial': 0, 'textformat': _n},
+        '/Info/MaxChargeVoltage': {'initial': None, 'textformat': _v},
+        '/Info/MaxChargeCurrent': {'initial': None, 'textformat': _a},
+        '/Info/MaxDischargeCurrent': {'initial': None, 'textformat': _a},
 
         '/Alarms/LowVoltage': {'initial': 0, 'textformat': _n},
         '/Alarms/HighVoltage': {'initial': 0, 'textformat': _n},
@@ -312,8 +374,23 @@ def main():
         '/Alarms/LowTemperature': {'initial': 0, 'textformat': _n},
         '/Alarms/HighTemperature': {'initial': 0, 'textformat': _n},
 
+        '/History/ChargeCycles': {'initial': None, 'textformat': _n},
         '/History/MinimumVoltage': {'initial': None, 'textformat': _v},
         '/History/MaximumVoltage': {'initial': None, 'textformat': _v},
+        '/History/TotalAhDrawn': {'initial': None, 'textformat': _ah},
+
+        '/System/MinVoltageCellId': {'initial': None, 'textformat': _s},
+        '/System/MinCellVoltage': {'initial': None, 'textformat': _v},
+        '/System/MaxVoltageCellId': {'initial': None, 'textformat': _s},
+        '/System/MaxCellVoltage': {'initial': None, 'textformat': _v},
+
+        '/System/MinTemperatureCellId': {'initial': None, 'textformat': _s},
+        '/System/MinCellTemperature': {'initial': None, 'textformat': _t},
+        '/System/MaxTemperatureCellId': {'initial': None, 'textformat': _s},
+        '/System/MaxCellTemperature': {'initial': None, 'textformat': _t},
+
+        '/System/NrOfModulesOnline': {'initial': 1, 'textformat': _n},
+        '/System/NrOfModulesOffline': {'initial': 0, 'textformat': _n},
 
         '/UpdateIndex': {'initial': 0, 'textformat': _n},
     }
