@@ -1,4 +1,4 @@
-# dbus-mqtt-battery - Emulates a physical battery from MQTT data
+# dbus-mqtt-battery - Emulates a aggregated/physical battery from MQTT data
 
 <small>GitHub repository: [mr-manuel/venus-os_dbus-mqtt-battery](https://github.com/mr-manuel/venus-os_dbus-mqtt-battery)</small>
 
@@ -10,6 +10,8 @@ I wrote this script for myself. I'm not responsible, if you damage something usi
 ### Purpose
 
 The script emulates a battery in Venus OS. It gets the MQTT data from a subscribed topic and publishes the information on the dbus as the service `com.victronenergy.battery.mqtt_battery` with the VRM instance `41`.
+
+It also can be used to aggregate multiple batteries. In this case you can use Node-RED to read the data from multiple batteries and then feed the calculated data to this driver, which then is selected as battery monitor.
 
 
 ### Config
@@ -23,11 +25,11 @@ Copy or rename the `config.sample.ini` to `config.ini` in the `dbus-mqtt-battery
 
 ```json
 {
-    "dc": {
-        "power": 321.6,
-        "voltage": 52.7
+    "Dc": {
+        "Power": 321.6,
+        "Voltage": 52.7
     },
-    "soc": 63
+    "Soc": 63
 }
 ```
 </details>
@@ -38,37 +40,121 @@ Please remove the `--> *` comments to get a valid `JSON`. Comments are not allow
 
 ```json
 {
-    "dc": {
-        "power": 321.6,                 --> Watt
-        "voltage": 52.7,                --> Volt
-        "current": 6.10,                --> Ampere - if empty, than calculated from "power" and "voltage"
-        "temperature": 23               --> Celsius
+    "Dc": {
+        "Power": 321.6,                       --> Watt
+        "Voltage": 52.7,                      --> Volt
+        "Current": 6.10,                      --> Ampere - if empty, than gets calculated from "power" and "voltage"
+        "Temperature": 23                     --> Celsius
     },
-    "InstalledCapacity": 200.0,         --> Ampere hours - total battery capacity
-    "ConsumedAmphours": 74.5,           --> Ampere hours - consumed
-    "Capacity": 125.5,                  --> Ampere hours - remaining - if empty, than calculated when "InstalledCapacity" and "ConsumedAmphours" are set
-    "soc": 63,                          --> Percent (0-100) - state of charge
-    "TimeToGo": 43967,                  --> Seconds - time until the battery is empty - if empty, than calculated when "Capacity" is set or calculated
-    "info": {
-        "MaxChargeVoltage": 58.4,       --> Volt - Maximum loading voltage that the MultiPlus/Quattro should use
-        "MaxChargeCurrent": 80.0,       --> Ampere - Maximum charge current that the MultiPlus/Quattro should use
-        "MaxDischargeCurrent": 120.0    --> Ampere - Maximum discharge current that the MultiPlus/Quattro should use
+    "InstalledCapacity": 200.0,               --> Ampere hours - total battery capacity
+    "ConsumedAmphours": 74.5,                 --> Ampere hours - consumed
+    "Capacity": 125.5,                        --> Ampere hours - remaining - if empty, than gets calculated when "InstalledCapacity" and "ConsumedAmphours" are set
+    "Soc": 63,                                --> Percent (0-100) - state of charge
+    "TimeToGo": 43967,                        --> Seconds - time until the battery is empty - if empty, than gets calculated when "Capacity" is set or calculated
+    "Balancing": 0,                           --> Bool - 0 = inactive; 1 = active
+    "SystemSwitch": 0,                        --> Bool - 0 = disabled; 1 = enabled
+    "Alarms": {
+        "LowVoltage": 0,                      --> Bool - 0 = ok; 1 = warning; 2 = alarm
+        "HighVoltage": 0,                     --> Bool - 0 = ok; 1 = warning; 2 = alarm
+        "LowSoc": 0,                          --> Bool - 0 = ok; 1 = warning; 2 = alarm
+        "HighChargeCurrent": 0,               --> Bool - 0 = ok; 1 = warning; 2 = alarm
+        "HighDischargeCurrent": 0,            --> Bool - 0 = ok; 1 = warning; 2 = alarm
+        "HighCurrent": 0,                     --> Bool - 0 = ok; 1 = warning; 2 = alarm
+        "CellImbalance": 0,                   --> Bool - 0 = ok; 1 = warning; 2 = alarm
+        "HighChargeTemperature": 0,           --> Bool - 0 = ok; 1 = warning; 2 = alarm
+        "LowChargeTemperature": 0,            --> Bool - 0 = ok; 1 = warning; 2 = alarm
+        "LowCellVoltage": 0,                  --> Bool - 0 = ok; 1 = warning; 2 = alarm
+        "LowTemperature": 0,                  --> Bool - 0 = ok; 1 = warning; 2 = alarm
+        "HighTemperature": 0,                 --> Bool - 0 = ok; 1 = warning; 2 = alarm
+        "FuseBlown": 0                        --> Bool - 0 = ok; 1 = warning; 2 = alarm
     },
-    "history": {
-        "ChargeCycles": 5,              --> Number - cycles for complete battery lifetime
-        "voltageMin": 40.8,             --> Battery voltage minimum over time
-        "voltageMax": 58.4,             --> Battery voltage maximum over time
-        "TotalAhDrawn": 1057.3          --> Ampere hours - drawn ampere hours for complete battery lifetime
+    "Info": {
+        "ChargeRequest": 0,                   --> Bool - 0 = inactive; 1 = active
+        "MaxChargeVoltage": 58.4,             --> Volt - Maximum loading voltage that the MultiPlus/Quattro should use
+        "MaxChargeCurrent": 80.0,             --> Ampere - Maximum charge current that the MultiPlus/Quattro should use
+        "MaxDischargeCurrent": 120.0          --> Ampere - Maximum discharge current that the MultiPlus/Quattro should use
     },
-    "system": {
-        "MinVoltageCellId": "C3",       --> String - ID of the cell with the lowest voltage
-        "MinCellVoltage": 3.392,        --> Volt - Of the cell with the lowest voltage
-        "MaxVoltageCellId": "C15",      --> String - ID of the cell with the highest voltage
-        "MaxCellVoltage": 3.417,        --> Volt - Of the cell with the highest voltage
-        "MinTemperatureCellId": "C2",   --> String - ID of the cell with the lowest temperature
-        "MinCellTemperature": 22.5,     --> Celsius - Of the cell with the lowest temperature
-        "MaxTemperatureCellId": "C9",   --> String - ID of the cell with the highest temperature
-        "MaxCellTemperature": 23.5      --> Celsius - Of the cell with the highest temperature
+    "History": {
+        "ChargeCycles": 5,                    --> Number - cycles for complete battery lifetime
+        "MinimumVoltage": 40.8,               --> Battery voltage minimum over time
+        "MaximumVoltage": 58.4,               --> Battery voltage maximum over time
+        "TotalAhDrawn": 1057.3                --> Ampere hours - drawn ampere hours for complete battery lifetime
+    },
+    "System": {
+        "MinVoltageCellId": "C3",             --> String - ID of the cell with the lowest voltage - if empty, than gets calculated when elements in "Voltages" are present
+        "MinCellVoltage": 3.392,              --> Volt - Of the cell with the lowest voltage - if empty, than gets calculated when elements in "Voltages" are present
+        "MaxVoltageCellId": "C15",            --> String - ID of the cell with the highest voltage - if empty, than gets calculated when elements in "Voltages" are present
+        "MaxCellVoltage": 3.417,              --> Volt - Of the cell with the highest voltage - if empty, than gets calculated when elements in "Voltages" are present
+
+        "MinTemperatureCellId": "C2",         --> String - ID of the cell with the lowest temperature
+        "MinCellTemperature": 22.5,           --> Celsius - Of the cell with the lowest temperature
+        "MaxTemperatureCellId": "C9",         --> String - ID of the cell with the highest temperature
+        "MaxCellTemperature": 23.5,           --> Celsius - Of the cell with the highest temperature
+        "MOSTemperature": 23.5,               --> Celsius - Temperature of the Mosfets
+
+        "NrOfModulesOnline": 0,               --> Number - How many modules are online
+        "NrOfModulesOffline": 0,              --> Number - How many modules are offline
+
+        "NrOfModulesBlockingCharge": 0,       --> Number - How many modules are blocking charge
+        "NrOfModulesBlockingDischarge": 0     --> Number - How many modules are blocking discharge
+    },
+    "Voltages": {
+        "Cell1":  3.201,                      --> Volt - voltage of this cell
+        "Cell2":  3.202,                      --> Volt - voltage of this cell
+        "Cell3":  3.203,                      --> Volt - voltage of this cell
+        "Cell4":  3.204,                      --> Volt - voltage of this cell
+        "Cell5":  3.205,                      --> Volt - voltage of this cell
+        "Cell6":  3.206,                      --> Volt - voltage of this cell
+        "Cell7":  3.207,                      --> Volt - voltage of this cell
+        "Cell8":  3.208,                      --> Volt - voltage of this cell
+        "Cell9":  3.209,                      --> Volt - voltage of this cell
+        "Cell10": 3.210,                      --> Volt - voltage of this cell
+        "Cell11": 3.211,                      --> Volt - voltage of this cell
+        "Cell12": 3.212,                      --> Volt - voltage of this cell
+        "Cell13": 3.213,                      --> Volt - voltage of this cell
+        "Cell14": 3.214,                      --> Volt - voltage of this cell
+        "Cell15": 3.215,                      --> Volt - voltage of this cell
+        "Cell16": 3.216,                      --> Volt - voltage of this cell
+        "Cell17": 3.217,                      --> Volt - voltage of this cell
+        "Cell18": 3.218,                      --> Volt - voltage of this cell
+        "Cell19": 3.219,                      --> Volt - voltage of this cell
+        "Cell20": 3.220,                      --> Volt - voltage of this cell
+        "Cell21": 3.221,                      --> Volt - voltage of this cell
+        "Cell22": 3.222,                      --> Volt - voltage of this cell
+        "Cell23": 3.223,                      --> Volt - voltage of this cell
+        "Cell24": 3.224                       --> Volt - voltage of this cell
+    },
+    "Balances": {
+        "Cell1":  0,                          --> Bool - 0 = inactive; 1 = cell is beeing balanced
+        "Cell2":  0,                          --> Bool - 0 = inactive; 1 = cell is beeing balanced
+        "Cell3":  0,                          --> Bool - 0 = inactive; 1 = cell is beeing balanced
+        "Cell4":  0,                          --> Bool - 0 = inactive; 1 = cell is beeing balanced
+        "Cell5":  0,                          --> Bool - 0 = inactive; 1 = cell is beeing balanced
+        "Cell6":  0,                          --> Bool - 0 = inactive; 1 = cell is beeing balanced
+        "Cell7":  0,                          --> Bool - 0 = inactive; 1 = cell is beeing balanced
+        "Cell8":  0,                          --> Bool - 0 = inactive; 1 = cell is beeing balanced
+        "Cell9":  0,                          --> Bool - 0 = inactive; 1 = cell is beeing balanced
+        "Cell10": 0,                          --> Bool - 0 = inactive; 1 = cell is beeing balanced
+        "Cell11": 0,                          --> Bool - 0 = inactive; 1 = cell is beeing balanced
+        "Cell12": 0,                          --> Bool - 0 = inactive; 1 = cell is beeing balanced
+        "Cell13": 0,                          --> Bool - 0 = inactive; 1 = cell is beeing balanced
+        "Cell14": 0,                          --> Bool - 0 = inactive; 1 = cell is beeing balanced
+        "Cell15": 0,                          --> Bool - 0 = inactive; 1 = cell is beeing balanced
+        "Cell16": 0,                          --> Bool - 0 = inactive; 1 = cell is beeing balanced
+        "Cell17": 0,                          --> Bool - 0 = inactive; 1 = cell is beeing balanced
+        "Cell18": 0,                          --> Bool - 0 = inactive; 1 = cell is beeing balanced
+        "Cell19": 0,                          --> Bool - 0 = inactive; 1 = cell is beeing balanced
+        "Cell20": 0,                          --> Bool - 0 = inactive; 1 = cell is beeing balanced
+        "Cell21": 0,                          --> Bool - 0 = inactive; 1 = cell is beeing balanced
+        "Cell22": 0,                          --> Bool - 0 = inactive; 1 = cell is beeing balanced
+        "Cell23": 0,                          --> Bool - 0 = inactive; 1 = cell is beeing balanced
+        "Cell24": 0                           --> Bool - 0 = inactive; 1 = cell is beeing balanced
+    },
+    "Io": {
+        "AllowToCharge": 0,                   --> Bool - 0 = disabled; 1 = enabled
+        "AllowToDischarge": 0,                --> Bool - 0 = disabled; 1 = enabled
+        "AllowToBalance": 0,                  --> Bool - 0 = disabled; 1 = enabled
+        "ExternalRelay": 0                    --> Bool - 0 = disabled; 1 = enabled
     }
 }
 ```

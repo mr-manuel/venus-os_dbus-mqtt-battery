@@ -37,5 +37,10 @@ then
     echo >> $filename
 fi
 
+# install qml files, if needed
+if [ ! -f /opt/victronenergy/gui/qml/PageBatteryCellVoltages.qml ]; then
+    bash "$SCRIPT_DIR/installqml.sh"
+fi
+
 # if not alreay added, then add to rc.local
 grep -qxF "bash $SCRIPT_DIR/install.sh" $filename || echo "bash $SCRIPT_DIR/install.sh" >> $filename
