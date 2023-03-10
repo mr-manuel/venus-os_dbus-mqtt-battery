@@ -189,6 +189,27 @@ If the seconds are under 5 then the service crashes and gets restarted all the t
 
 If the script stops with the message `dbus.exceptions.NameExistsException: Bus name already exists: com.victronenergy.battery.mqtt_battery"` it means that the service is still running or another service is using that bus name.
 
+### Multiple instances
+
+It's possible to have multiple instances, but it's not automated. Follow these steps to achieve this:
+
+1. Save the new name to a variable `driverclone=dbus-mqtt-battery-2`
+
+2. Copy current folder and add a number `cp -r /data/etc/dbus-mqtt-battery/ /data/etc/$driverclone/`
+
+3. Rename the main script `mv /data/etc/$driverclone/dbus-mqtt-battery.py /data/etc/$driverclone/$driverclone.py`
+
+4. Fix the script references for service and log
+    ```
+    sed -i 's:dbus-mqtt-battery:'$driverclone':g' /data/etc/$driverclone/service/run
+    sed -i 's:dbus-mqtt-battery:'$driverclone':g' /data/etc/$driverclone/service/log/run
+    ```
+
+5. Change the `device_name` and `device_instance` in the `config.ini`
+
+Now you can install and run the cloned driver. Should you need another instance just increase the number in step 1 and repeat all steps.
+
+
 ### Compatibility
 
 It was tested on following devices:
@@ -209,5 +230,10 @@ It was tested on following devices:
 ![MQTT Battery - device list - mqtt battery](/screenshots/battery_device_list_mqtt-battery_5.png)
 ![MQTT Battery - device list - mqtt battery](/screenshots/battery_device_list_mqtt-battery_6.png)
 ![MQTT Battery - device list - mqtt battery](/screenshots/battery_device_list_mqtt-battery_7.png)
+![MQTT Battery - device list - mqtt battery](/screenshots/battery_device_list_mqtt-battery_8.png)
+![MQTT Battery - device list - mqtt battery](/screenshots/battery_device_list_mqtt-battery_9.png)
+![MQTT Battery - device list - mqtt battery](/screenshots/battery_device_list_mqtt-battery_10.png)
+![MQTT Battery - device list - mqtt battery](/screenshots/battery_device_list_mqtt-battery_11.png)
+![MQTT Battery - device list - mqtt battery](/screenshots/battery_device_list_mqtt-battery_12.png)
 
 </details>

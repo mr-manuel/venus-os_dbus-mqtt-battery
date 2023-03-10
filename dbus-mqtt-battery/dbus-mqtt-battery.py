@@ -211,7 +211,7 @@ def on_connect(client, userdata, flags, rc):
     if rc == 0:
         logging.info("MQTT client: Connected to MQTT broker!")
         connected = 1
-        client.subscribe(config['MQTT']['topic_battery'])
+        client.subscribe(config['MQTT']['topic'])
     else:
         logging.error("MQTT client: Failed to connect, return code %d\n", rc)
 
@@ -222,68 +222,80 @@ def on_message(client, userdata, msg):
             battery_dict, last_changed
 
         # get JSON from topic
-        if msg.topic == config['MQTT']['topic_battery']:
+        if msg.topic == config['MQTT']['topic']:
             if msg.payload != '' and msg.payload != b'':
                 jsonpayload = json.loads(msg.payload)
 
                 last_changed = int(time.time())
 
-                # save JSON data into battery_dict
-                for key_1, data_1 in jsonpayload.items():
+                if (
+                    'Dc' in jsonpayload
+                    and 'Soc' in jsonpayload
+                    and 'Power' in jsonpayload['Dc']
+                    and 'Voltage' in jsonpayload['Dc']
+                ):
 
-                    if type(data_1) is dict:
+                    # save JSON data into battery_dict
+                    for key_1, data_1 in jsonpayload.items():
 
-                        for key_2, data_2 in data_1.items():
+                        if type(data_1) is dict:
 
-                            if key_1 == 'Dc':
-                                key = '/' + key_1 + '/0/' + key_2
-                            else:
-                                key = '/' + key_1 + '/' + key_2
+                            for key_2, data_2 in data_1.items():
 
-                            if key in battery_dict:
-                               battery_dict[key]['value'] = data_2
-                            else:
-                                logging.warning("Received key \"" + str(key) + "\" with value \"" + str(data_2) + "\" is not valid")
+                                if key_1 == 'Dc':
+                                    key = '/' + key_1 + '/0/' + key_2
+                                else:
+                                    key = '/' + key_1 + '/' + key_2
 
-                    else:
+                                if key in battery_dict:
+                                    battery_dict[key]['value'] = data_2
+                                else:
+                                    logging.warning("Received key \"" + str(key) + "\" with value \"" + str(data_2) + "\" is not valid")
 
-                        key = '/' + key_1
-                        if key in battery_dict:
-                            battery_dict[key]['value'] = data_1
                         else:
-                            logging.warning("Received key \"" + str(key) + "\" with value \"" + str(data_1) + "\" is not valid")
 
-                # calculate possible values if missing
-                if 'Current' not in jsonpayload['Dc']:
-                    battery_dict['/Dc/0/Current']['value'] = round( ( battery_dict['/Dc/0/Power']['value'] / battery_dict['/Dc/0/Voltage']['value'] ), 3 )
+                            key = '/' + key_1
+                            if key in battery_dict:
+                                battery_dict[key]['value'] = data_1
+                            else:
+                                logging.warning("Received key \"" + str(key) + "\" with value \"" + str(data_1) + "\" is not valid")
 
-                if 'Capacity' not in jsonpayload and battery_dict['/InstalledCapacity']['value'] is not None and battery_dict['/ConsumedAmphours']['value'] is not None:
-                    battery_dict['/Capacity']['value'] = ( battery_dict['/InstalledCapacity']['value'] - battery_dict['/ConsumedAmphours']['value'] )
+                    # calculate possible values if missing
+                    if 'Current' not in jsonpayload['Dc']:
+                        battery_dict['/Dc/0/Current']['value'] = round( ( battery_dict['/Dc/0/Power']['value'] / battery_dict['/Dc/0/Voltage']['value'] ), 3 )
 
-                if 'TimeToGo' not in jsonpayload and battery_dict['/Dc/0/Current']['value'] is not None and battery_dict['/Capacity']['value'] is not None:
-                    battery_dict['/TimeToGo']['value'] = round( ( battery_dict['/Capacity']['value'] / battery_dict['/Dc/0/Current']['value'] * 60 * 60 ), 0 )
+                    if 'Capacity' not in jsonpayload and battery_dict['/InstalledCapacity']['value'] is not None and battery_dict['/ConsumedAmphours']['value'] is not None:
+                        battery_dict['/Capacity']['value'] = ( battery_dict['/InstalledCapacity']['value'] - battery_dict['/ConsumedAmphours']['value'] )
 
-                if 'Voltages' in jsonpayload and len(jsonpayload['Voltages']) > 0:
-                    if 'MinVoltageCellId' not in jsonpayload['System']:
-                        battery_dict['/System/MinVoltageCellId']['value'] = min(jsonpayload['Voltages'], key=jsonpayload['Voltages'].get)
+                    if 'TimeToGo' not in jsonpayload and battery_dict['/Dc/0/Current']['value'] is not None and battery_dict['/Capacity']['value'] is not None:
+                        battery_dict['/TimeToGo']['value'] = round( ( battery_dict['/Capacity']['value'] / battery_dict['/Dc/0/Current']['value'] * 60 * 60 ), 0 )
 
-                    if 'MinCellVoltage' not in jsonpayload['System']:
-                        battery_dict['/System/MinCellVoltage']['value'] = min(jsonpayload['Voltages'].values())
+                    if 'Voltages' in jsonpayload and len(jsonpayload['Voltages']) > 0:
+                        if 'MinVoltageCellId' not in jsonpayload['System']:
+                            battery_dict['/System/MinVoltageCellId']['value'] = min(jsonpayload['Voltages'], key=jsonpayload['Voltages'].get)
 
-                    if 'MaxVoltageCellId' not in jsonpayload['System']:
-                        battery_dict['/System/MaxVoltageCellId']['value'] = max(jsonpayload['Voltages'], key=jsonpayload['Voltages'].get)
+                        if 'MinCellVoltage' not in jsonpayload['System']:
+                            battery_dict['/System/MinCellVoltage']['value'] = min(jsonpayload['Voltages'].values())
 
-                    if 'MaxCellVoltage' not in jsonpayload['System']:
-                        battery_dict['/System/MaxCellVoltage']['value'] = max(jsonpayload['Voltages'].values())
+                        if 'MaxVoltageCellId' not in jsonpayload['System']:
+                            battery_dict['/System/MaxVoltageCellId']['value'] = max(jsonpayload['Voltages'], key=jsonpayload['Voltages'].get)
 
-                    if 'Sum' not in jsonpayload['Voltages']:
-                        battery_dict['/Voltages/Sum']['value'] = sum(jsonpayload['Voltages'].values())
+                        if 'MaxCellVoltage' not in jsonpayload['System']:
+                            battery_dict['/System/MaxCellVoltage']['value'] = max(jsonpayload['Voltages'].values())
 
-                    if 'Diff' not in jsonpayload['Voltages'] and battery_dict['/System/MinCellVoltage']['value'] is not None and battery_dict['/System/MaxCellVoltage']['value'] is not None:
-                        battery_dict['/Voltages/Diff']['value'] = battery_dict['/System/MaxCellVoltage']['value'] - battery_dict['/System/MinCellVoltage']['value']
+                        if 'Sum' not in jsonpayload['Voltages']:
+                            battery_dict['/Voltages/Sum']['value'] = sum(jsonpayload['Voltages'].values())
+
+                        if 'Diff' not in jsonpayload['Voltages'] and battery_dict['/System/MinCellVoltage']['value'] is not None and battery_dict['/System/MaxCellVoltage']['value'] is not None:
+                            battery_dict['/Voltages/Diff']['value'] = battery_dict['/System/MaxCellVoltage']['value'] - battery_dict['/System/MinCellVoltage']['value']
+
+                else:
+                    logging.warning("Received JSON doesn't contain minimum required values")
+                    logging.warning("Example: {\"Dc\":{\"Power\":321.6,\"Voltage\":52.7},\"Soc\":63}")
+                    logging.debug("MQTT payload: " + str(msg.payload)[1:])
 
             else:
-                logging.warning("Received JSON MQTT message was empty and therefore it was ignored")
+                logging.warning("Received message was empty and therefore it was ignored")
                 logging.debug("MQTT payload: " + str(msg.payload)[1:])
 
     except ValueError as e:
@@ -303,6 +315,7 @@ class DbusMqttBatteryService:
         deviceinstance,
         paths,
         productname='MQTT Battery',
+        customname='MQTT Battery',
         connection='MQTT Battery service'
     ):
 
@@ -320,8 +333,8 @@ class DbusMqttBatteryService:
         self._dbusservice.add_path('/DeviceInstance', deviceinstance)
         self._dbusservice.add_path('/ProductId', 0xFFFF)
         self._dbusservice.add_path('/ProductName', productname)
-        self._dbusservice.add_path('/CustomName', productname)
-        self._dbusservice.add_path('/FirmwareVersion', '0.2.0')
+        self._dbusservice.add_path('/CustomName', customname)
+        self._dbusservice.add_path('/FirmwareVersion', '1.0.0')
         #self._dbusservice.add_path('/HardwareVersion', '')
         self._dbusservice.add_path('/Connected', 1)
 
@@ -344,40 +357,6 @@ class DbusMqttBatteryService:
 
             for setting, data in battery_dict.items():
                 self._dbusservice[setting] = data['value']
-
-
-            '''
-            # For all alarms: 0=OK; 1=Warning; 2=Alarm
-            if battery_dict['/Dc/0/Voltage'] == 0:
-                alarm_lowvoltage = 0
-            elif battery_dict['/Dc/0/Voltage'] < float(config['BATTERY']['VoltageLowCritical']):
-                alarm_lowvoltage = 2
-            elif battery_dict['/Dc/0/Voltage'] < float(config['BATTERY']['VoltageLowWarning']):
-                alarm_lowvoltage = 1
-            else:
-                alarm_lowvoltage = 0
-            self._dbusservice['/Alarms/LowVoltage'] = alarm_lowvoltage
-
-            if battery_dict['/Dc/0/Voltage'] == 0:
-                alarm_highvoltage = 0
-            elif battery_dict['/Dc/0/Voltage'] > float(config['BATTERY']['VoltageHighCritical']):
-                alarm_highvoltage = 2
-            elif battery_dict['/Dc/0/Voltage'] > float(config['BATTERY']['VoltageHighWarning']):
-                alarm_highvoltage = 1
-            else:
-                alarm_highvoltage = 0
-            self._dbusservice['/Alarms/HighVoltage'] = alarm_highvoltage
-
-            if battery_dict['/Soc'] == 0:
-                alarm_lowsoc = 0
-            elif battery_dict['/Soc'] < float(config['BATTERY']['LowSocCritical']):
-                alarm_lowsoc = 2
-            elif battery_dict['/Soc'] < float(config['BATTERY']['LowSocWarning']):
-                alarm_lowsoc = 1
-            else:
-                alarm_lowsoc = 0
-            self._dbusservice['/Alarms/LowSoc'] = alarm_lowsoc
-            '''
 
             logging.info("Battery SoC: {:.2f} V - {:.2f} %".format(battery_dict['/Dc/0/Power']['value'], battery_dict['/Soc']['value']))
 
@@ -405,7 +384,7 @@ def main():
 
 
     # MQTT setup
-    client = mqtt.Client("MqttBattery")
+    client = mqtt.Client("MqttBattery_" + str(config['MQTT']['device_instance']))
     client.on_disconnect = on_disconnect
     client.on_connect = on_connect
     client.on_message = on_message
@@ -453,8 +432,9 @@ def main():
 
 
     pvac_output = DbusMqttBatteryService(
-        servicename='com.victronenergy.battery.mqtt_battery',
-        deviceinstance=41,
+        servicename='com.victronenergy.battery.mqtt_battery_' + str(config['MQTT']['device_instance']),
+        deviceinstance=int(config['MQTT']['device_instance']),
+        customname=config['MQTT']['device_name'],
         paths=paths_dbus
         )
 
