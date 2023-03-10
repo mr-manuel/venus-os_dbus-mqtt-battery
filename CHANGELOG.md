@@ -5,6 +5,7 @@
 * Added: Device name can be changed in the `config.ini`
 * Added: Device instance can be changed in the `config.ini`
 * Added: How to create multiple instances in `README.md`
+* Changed: ⚠️ JSON key names changed. Pay attention that the keys are case sensitive
 * Changed: Completely rewritten the driver to keep it simple with a lot of fields
 * Changed: Topic variable name in `config.ini`
 * Removed: Alarm settings in `config.ini`. All alarms now have to be triggered over MQTT
