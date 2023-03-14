@@ -43,14 +43,14 @@ Please remove the `--> *` comments to get a valid `JSON`. Comments are not allow
     "Dc": {
         "Power": 321.6,                       --> Watt
         "Voltage": 52.7,                      --> Volt
-        "Current": 6.10,                      --> Ampere - if empty, than gets calculated from "power" and "voltage"
+        "Current": 6.10,                      --> Ampere - if missing in the JSON, than gets calculated from "power" and "voltage"
         "Temperature": 23                     --> Celsius
     },
     "InstalledCapacity": 200.0,               --> Ampere hours - total battery capacity
     "ConsumedAmphours": 74.5,                 --> Ampere hours - consumed
-    "Capacity": 125.5,                        --> Ampere hours - remaining - if empty, than gets calculated when "InstalledCapacity" and "ConsumedAmphours" are set
+    "Capacity": 125.5,                        --> Ampere hours - remaining - if missing in the JSON, than gets calculated when "InstalledCapacity" and "ConsumedAmphours" are set
     "Soc": 63,                                --> Percent (0-100) - state of charge
-    "TimeToGo": 43967,                        --> Seconds - time until the battery is empty - if empty, than gets calculated when "Capacity" is set or calculated
+    "TimeToGo": 43967,                        --> Seconds - time until the battery is empty - if missing in the JSON, than gets calculated when "Capacity" is set or calculated
     "Balancing": 0,                           --> Bool - 0 = inactive; 1 = active
     "SystemSwitch": 0,                        --> Bool - 0 = disabled; 1 = enabled
     "Alarms": {
@@ -81,10 +81,10 @@ Please remove the `--> *` comments to get a valid `JSON`. Comments are not allow
         "TotalAhDrawn": 1057.3                --> Ampere hours - drawn ampere hours for complete battery lifetime
     },
     "System": {
-        "MinVoltageCellId": "C3",             --> String - ID of the cell with the lowest voltage - if empty, than gets calculated when elements in "Voltages" are present
-        "MinCellVoltage": 3.392,              --> Volt - Of the cell with the lowest voltage - if empty, than gets calculated when elements in "Voltages" are present
-        "MaxVoltageCellId": "C15",            --> String - ID of the cell with the highest voltage - if empty, than gets calculated when elements in "Voltages" are present
-        "MaxCellVoltage": 3.417,              --> Volt - Of the cell with the highest voltage - if empty, than gets calculated when elements in "Voltages" are present
+        "MinVoltageCellId": "C3",             --> String - ID of the cell with the lowest voltage - if missing in the JSON, than gets calculated when elements in "Voltages" are present
+        "MinCellVoltage": 3.392,              --> Volt - Of the cell with the lowest voltage - if missing in the JSON, than gets calculated when elements in "Voltages" are present
+        "MaxVoltageCellId": "C15",            --> String - ID of the cell with the highest voltage - if missing in the JSON, than gets calculated when elements in "Voltages" are present
+        "MaxCellVoltage": 3.417,              --> Volt - Of the cell with the highest voltage - if missing in the JSON, than gets calculated when elements in "Voltages" are present
 
         "MinTemperatureCellId": "C2",         --> String - ID of the cell with the lowest temperature
         "MinCellTemperature": 22.5,           --> Celsius - Of the cell with the lowest temperature
@@ -205,7 +205,7 @@ It's possible to have multiple instances, but it's not automated. Follow these s
     sed -i 's:dbus-mqtt-battery:'$driverclone':g' /data/etc/$driverclone/service/log/run
     ```
 
-5. Change the `device_name` and `device_instance` in the `config.ini`
+5. Change the `device_name` and increase the `device_instance` in the `config.ini`
 
 Now you can install and run the cloned driver. Should you need another instance just increase the number in step 1 and repeat all steps.
 
