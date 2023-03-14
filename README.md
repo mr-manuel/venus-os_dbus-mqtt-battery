@@ -54,19 +54,19 @@ Please remove the `--> *` comments to get a valid `JSON`. Comments are not allow
     "Balancing": 0,                           --> Bool - 0 = inactive; 1 = active
     "SystemSwitch": 0,                        --> Bool - 0 = disabled; 1 = enabled
     "Alarms": {
-        "LowVoltage": 0,                      --> Bool - 0 = ok; 1 = warning; 2 = alarm
-        "HighVoltage": 0,                     --> Bool - 0 = ok; 1 = warning; 2 = alarm
-        "LowSoc": 0,                          --> Bool - 0 = ok; 1 = warning; 2 = alarm
-        "HighChargeCurrent": 0,               --> Bool - 0 = ok; 1 = warning; 2 = alarm
-        "HighDischargeCurrent": 0,            --> Bool - 0 = ok; 1 = warning; 2 = alarm
-        "HighCurrent": 0,                     --> Bool - 0 = ok; 1 = warning; 2 = alarm
-        "CellImbalance": 0,                   --> Bool - 0 = ok; 1 = warning; 2 = alarm
-        "HighChargeTemperature": 0,           --> Bool - 0 = ok; 1 = warning; 2 = alarm
-        "LowChargeTemperature": 0,            --> Bool - 0 = ok; 1 = warning; 2 = alarm
-        "LowCellVoltage": 0,                  --> Bool - 0 = ok; 1 = warning; 2 = alarm
-        "LowTemperature": 0,                  --> Bool - 0 = ok; 1 = warning; 2 = alarm
-        "HighTemperature": 0,                 --> Bool - 0 = ok; 1 = warning; 2 = alarm
-        "FuseBlown": 0                        --> Bool - 0 = ok; 1 = warning; 2 = alarm
+        "LowVoltage": 0,                      --> Int - 0 = ok; 1 = warning; 2 = alarm
+        "HighVoltage": 0,                     --> Int - 0 = ok; 1 = warning; 2 = alarm
+        "LowSoc": 0,                          --> Int - 0 = ok; 1 = warning; 2 = alarm
+        "HighChargeCurrent": 0,               --> Int - 0 = ok; 1 = warning; 2 = alarm
+        "HighDischargeCurrent": 0,            --> Int - 0 = ok; 1 = warning; 2 = alarm
+        "HighCurrent": 0,                     --> Int - 0 = ok; 1 = warning; 2 = alarm
+        "CellImbalance": 0,                   --> Int - 0 = ok; 1 = warning; 2 = alarm
+        "HighChargeTemperature": 0,           --> Int - 0 = ok; 1 = warning; 2 = alarm
+        "LowChargeTemperature": 0,            --> Int - 0 = ok; 1 = warning; 2 = alarm
+        "LowCellVoltage": 0,                  --> Int - 0 = ok; 1 = warning; 2 = alarm
+        "LowTemperature": 0,                  --> Int - 0 = ok; 1 = warning; 2 = alarm
+        "HighTemperature": 0,                 --> Int - 0 = ok; 1 = warning; 2 = alarm
+        "FuseBlown": 0                        --> Int - 0 = ok; 1 = warning; 2 = alarm
     },
     "Info": {
         "ChargeRequest": 0,                   --> Bool - 0 = inactive; 1 = active
