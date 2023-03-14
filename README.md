@@ -47,12 +47,12 @@ Please remove the `--> *` comments to get a valid `JSON`. Comments are not allow
         "Temperature": 23                     --> Celsius
     },
     "InstalledCapacity": 200.0,               --> Ampere hours - total battery capacity
-    "ConsumedAmphours": 74.5,                 --> Ampere hours - consumed
-    "Capacity": 125.5,                        --> Ampere hours - remaining - if missing in the JSON, than gets calculated when "InstalledCapacity" and "ConsumedAmphours" are set
+    "ConsumedAmphours": 74.5,                 --> Ampere hours - consumed (only positive values)
+    "Capacity": 125.5,                        --> Ampere hours - remaining (only positive values) - if missing in the JSON, than gets calculated when "InstalledCapacity" and "ConsumedAmphours" are set
     "Soc": 63,                                --> Percent (0-100) - state of charge
     "TimeToGo": 43967,                        --> Seconds - time until the battery is empty - if missing in the JSON, than gets calculated when "Capacity" is set or calculated
-    "Balancing": 0,                           --> Bool - 0 = inactive; 1 = active
-    "SystemSwitch": 0,                        --> Bool - 0 = disabled; 1 = enabled
+    "Balancing": 0,                           --> Int - 0 = inactive; 1 = active
+    "SystemSwitch": 0,                        --> Int - 0 = disabled; 1 = enabled
     "Alarms": {
         "LowVoltage": 0,                      --> Int - 0 = ok; 1 = warning; 2 = alarm
         "HighVoltage": 0,                     --> Int - 0 = ok; 1 = warning; 2 = alarm
@@ -69,7 +69,7 @@ Please remove the `--> *` comments to get a valid `JSON`. Comments are not allow
         "FuseBlown": 0                        --> Int - 0 = ok; 1 = warning; 2 = alarm
     },
     "Info": {
-        "ChargeRequest": 0,                   --> Bool - 0 = inactive; 1 = active
+        "ChargeRequest": 0,                   --> Int - 0 = inactive; 1 = active
         "MaxChargeVoltage": 58.4,             --> Volt - Maximum loading voltage that the MultiPlus/Quattro should use
         "MaxChargeCurrent": 80.0,             --> Ampere - Maximum charge current that the MultiPlus/Quattro should use
         "MaxDischargeCurrent": 120.0          --> Ampere - Maximum discharge current that the MultiPlus/Quattro should use
@@ -125,36 +125,36 @@ Please remove the `--> *` comments to get a valid `JSON`. Comments are not allow
         "Cell24": 3.224                       --> Volt - voltage of this cell
     },
     "Balances": {
-        "Cell1":  0,                          --> Bool - 0 = inactive; 1 = cell is beeing balanced
-        "Cell2":  0,                          --> Bool - 0 = inactive; 1 = cell is beeing balanced
-        "Cell3":  0,                          --> Bool - 0 = inactive; 1 = cell is beeing balanced
-        "Cell4":  0,                          --> Bool - 0 = inactive; 1 = cell is beeing balanced
-        "Cell5":  0,                          --> Bool - 0 = inactive; 1 = cell is beeing balanced
-        "Cell6":  0,                          --> Bool - 0 = inactive; 1 = cell is beeing balanced
-        "Cell7":  0,                          --> Bool - 0 = inactive; 1 = cell is beeing balanced
-        "Cell8":  0,                          --> Bool - 0 = inactive; 1 = cell is beeing balanced
-        "Cell9":  0,                          --> Bool - 0 = inactive; 1 = cell is beeing balanced
-        "Cell10": 0,                          --> Bool - 0 = inactive; 1 = cell is beeing balanced
-        "Cell11": 0,                          --> Bool - 0 = inactive; 1 = cell is beeing balanced
-        "Cell12": 0,                          --> Bool - 0 = inactive; 1 = cell is beeing balanced
-        "Cell13": 0,                          --> Bool - 0 = inactive; 1 = cell is beeing balanced
-        "Cell14": 0,                          --> Bool - 0 = inactive; 1 = cell is beeing balanced
-        "Cell15": 0,                          --> Bool - 0 = inactive; 1 = cell is beeing balanced
-        "Cell16": 0,                          --> Bool - 0 = inactive; 1 = cell is beeing balanced
-        "Cell17": 0,                          --> Bool - 0 = inactive; 1 = cell is beeing balanced
-        "Cell18": 0,                          --> Bool - 0 = inactive; 1 = cell is beeing balanced
-        "Cell19": 0,                          --> Bool - 0 = inactive; 1 = cell is beeing balanced
-        "Cell20": 0,                          --> Bool - 0 = inactive; 1 = cell is beeing balanced
-        "Cell21": 0,                          --> Bool - 0 = inactive; 1 = cell is beeing balanced
-        "Cell22": 0,                          --> Bool - 0 = inactive; 1 = cell is beeing balanced
-        "Cell23": 0,                          --> Bool - 0 = inactive; 1 = cell is beeing balanced
-        "Cell24": 0                           --> Bool - 0 = inactive; 1 = cell is beeing balanced
+        "Cell1":  0,                          --> Int - 0 = inactive; 1 = cell is beeing balanced
+        "Cell2":  0,                          --> Int - 0 = inactive; 1 = cell is beeing balanced
+        "Cell3":  0,                          --> Int - 0 = inactive; 1 = cell is beeing balanced
+        "Cell4":  0,                          --> Int - 0 = inactive; 1 = cell is beeing balanced
+        "Cell5":  0,                          --> Int - 0 = inactive; 1 = cell is beeing balanced
+        "Cell6":  0,                          --> Int - 0 = inactive; 1 = cell is beeing balanced
+        "Cell7":  0,                          --> Int - 0 = inactive; 1 = cell is beeing balanced
+        "Cell8":  0,                          --> Int - 0 = inactive; 1 = cell is beeing balanced
+        "Cell9":  0,                          --> Int - 0 = inactive; 1 = cell is beeing balanced
+        "Cell10": 0,                          --> Int - 0 = inactive; 1 = cell is beeing balanced
+        "Cell11": 0,                          --> Int - 0 = inactive; 1 = cell is beeing balanced
+        "Cell12": 0,                          --> Int - 0 = inactive; 1 = cell is beeing balanced
+        "Cell13": 0,                          --> Int - 0 = inactive; 1 = cell is beeing balanced
+        "Cell14": 0,                          --> Int - 0 = inactive; 1 = cell is beeing balanced
+        "Cell15": 0,                          --> Int - 0 = inactive; 1 = cell is beeing balanced
+        "Cell16": 0,                          --> Int - 0 = inactive; 1 = cell is beeing balanced
+        "Cell17": 0,                          --> Int - 0 = inactive; 1 = cell is beeing balanced
+        "Cell18": 0,                          --> Int - 0 = inactive; 1 = cell is beeing balanced
+        "Cell19": 0,                          --> Int - 0 = inactive; 1 = cell is beeing balanced
+        "Cell20": 0,                          --> Int - 0 = inactive; 1 = cell is beeing balanced
+        "Cell21": 0,                          --> Int - 0 = inactive; 1 = cell is beeing balanced
+        "Cell22": 0,                          --> Int - 0 = inactive; 1 = cell is beeing balanced
+        "Cell23": 0,                          --> Int - 0 = inactive; 1 = cell is beeing balanced
+        "Cell24": 0                           --> Int - 0 = inactive; 1 = cell is beeing balanced
     },
     "Io": {
-        "AllowToCharge": 0,                   --> Bool - 0 = disabled; 1 = enabled
-        "AllowToDischarge": 0,                --> Bool - 0 = disabled; 1 = enabled
-        "AllowToBalance": 0,                  --> Bool - 0 = disabled; 1 = enabled
-        "ExternalRelay": 0                    --> Bool - 0 = disabled; 1 = enabled
+        "AllowToCharge": 0,                   --> Int - 0 = disabled; 1 = enabled
+        "AllowToDischarge": 0,                --> Int - 0 = disabled; 1 = enabled
+        "AllowToBalance": 0,                  --> Int - 0 = disabled; 1 = enabled
+        "ExternalRelay": 0                    --> Int - 0 = disabled; 1 = enabled
     }
 }
 ```
