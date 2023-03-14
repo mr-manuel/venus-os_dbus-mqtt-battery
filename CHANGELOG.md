@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.0.1
+* Changed: Corrected descriptions in the full JSON structure
+* Changed: Fixed division by zero when Current = 0 during calculation of Time-to-Go or Voltage = 0 during calculation of Current
+
 ## v1.0.0
 * Added: A lot of new values that can be set, check the full [JSON structure](https://github.com/mr-manuel/venus-os_dbus-mqtt-battery#json-structure) in the `README.md` for details
 * Added: Device name can be changed in the `config.ini`

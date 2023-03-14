@@ -262,7 +262,7 @@ def on_message(client, userdata, msg):
 
                     # calculate possible values if missing
                     if 'Current' not in jsonpayload['Dc']:
-                        battery_dict['/Dc/0/Current']['value'] = round( ( battery_dict['/Dc/0/Power']['value'] / battery_dict['/Dc/0/Voltage']['value'] ), 3 )
+                        battery_dict['/Dc/0/Current']['value'] = round( ( battery_dict['/Dc/0/Power']['value'] / battery_dict['/Dc/0/Voltage']['value'] ), 3 ) if battery_dict['/Dc/0/Voltage']['value'] != 0 else 0
 
                     if (
                         'Capacity' not in jsonpayload
@@ -347,7 +347,7 @@ class DbusMqttBatteryService:
         self._dbusservice.add_path('/ProductId', 0xFFFF)
         self._dbusservice.add_path('/ProductName', productname)
         self._dbusservice.add_path('/CustomName', customname)
-        self._dbusservice.add_path('/FirmwareVersion', '1.0.0')
+        self._dbusservice.add_path('/FirmwareVersion', '1.0.1')
         #self._dbusservice.add_path('/HardwareVersion', '')
         self._dbusservice.add_path('/Connected', 1)
 
