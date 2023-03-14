@@ -264,11 +264,20 @@ def on_message(client, userdata, msg):
                     if 'Current' not in jsonpayload['Dc']:
                         battery_dict['/Dc/0/Current']['value'] = round( ( battery_dict['/Dc/0/Power']['value'] / battery_dict['/Dc/0/Voltage']['value'] ), 3 )
 
-                    if 'Capacity' not in jsonpayload and battery_dict['/InstalledCapacity']['value'] is not None and battery_dict['/ConsumedAmphours']['value'] is not None:
+                    if (
+                        'Capacity' not in jsonpayload
+                        and battery_dict['/InstalledCapacity']['value'] is not None
+                        and battery_dict['/ConsumedAmphours']['value'] is not None
+                    ):
                         battery_dict['/Capacity']['value'] = ( battery_dict['/InstalledCapacity']['value'] - battery_dict['/ConsumedAmphours']['value'] )
 
-                    if 'TimeToGo' not in jsonpayload and battery_dict['/Dc/0/Current']['value'] is not None and battery_dict['/Capacity']['value'] is not None:
-                        battery_dict['/TimeToGo']['value'] = round( ( battery_dict['/Capacity']['value'] / battery_dict['/Dc/0/Current']['value'] * 60 * 60 ), 0 )
+                    if (
+                        'TimeToGo' not in jsonpayload
+                        and battery_dict['/Dc/0/Current']['value'] is not None
+                        and battery_dict['/Capacity']['value'] is not None
+                    ):
+                        # if current is 0 display 30 days
+                        battery_dict['/TimeToGo']['value'] = round( ( battery_dict['/Capacity']['value'] / battery_dict['/Dc/0/Current']['value'] * 60 * 60 ), 0 ) if battery_dict['/Dc/0/Current']['value'] != 0 else ( 60 * 60 * 24 * 30 )
 
                     if 'Voltages' in jsonpayload and len(jsonpayload['Voltages']) > 0:
                         if 'MinVoltageCellId' not in jsonpayload['System']:
@@ -286,7 +295,11 @@ def on_message(client, userdata, msg):
                         if 'Sum' not in jsonpayload['Voltages']:
                             battery_dict['/Voltages/Sum']['value'] = sum(jsonpayload['Voltages'].values())
 
-                        if 'Diff' not in jsonpayload['Voltages'] and battery_dict['/System/MinCellVoltage']['value'] is not None and battery_dict['/System/MaxCellVoltage']['value'] is not None:
+                        if (
+                            'Diff' not in jsonpayload['Voltages']
+                            and battery_dict['/System/MinCellVoltage']['value'] is not None
+                            and battery_dict['/System/MaxCellVoltage']['value'] is not None
+                        ):
                             battery_dict['/Voltages/Diff']['value'] = battery_dict['/System/MaxCellVoltage']['value'] - battery_dict['/System/MinCellVoltage']['value']
 
                 else:
