@@ -21,7 +21,7 @@ Copy or rename the `config.sample.ini` to `config.ini` in the `dbus-mqtt-battery
 
 ### JSON structure
 
-<details><summary>Minimum required</summary>
+<details><summary>Minimum required to start the driver</summary>
 
 ```json
 {
@@ -30,6 +30,22 @@ Copy or rename the `config.sample.ini` to `config.ini` in the `dbus-mqtt-battery
         "Voltage": 52.7
     },
     "Soc": 63
+}
+```
+</details>
+
+<details><summary>Minimum required that the MTTP is controlled by BMS</summary>
+
+```json
+{
+    "Dc": {
+        "Power": 321.6,
+        "Voltage": 52.7
+    },
+    "Soc": 63,
+    "Info": {
+        "MaxChargeVoltage": 55.2
+    }
 }
 ```
 </details>
@@ -70,7 +86,7 @@ Please remove the `--> *` comments to get a valid `JSON`. Comments are not allow
     },
     "Info": {
         "ChargeRequest": 0,                   --> Int - 0 = inactive; 1 = active
-        "MaxChargeVoltage": 58.4,             --> Volt - Maximum loading voltage that the MultiPlus/Quattro should use
+        "MaxChargeVoltage": 55.2,             --> Volt - Maximum loading voltage that the MultiPlus/Quattro should use
         "MaxChargeCurrent": 80.0,             --> Ampere - Maximum charge current that the MultiPlus/Quattro should use
         "MaxDischargeCurrent": 120.0          --> Ampere - Maximum discharge current that the MultiPlus/Quattro should use
     },
