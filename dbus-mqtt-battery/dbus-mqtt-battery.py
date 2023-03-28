@@ -354,7 +354,7 @@ class DbusMqttBatteryService:
         self._dbusservice.add_path('/ProductId', 0xFFFF)
         self._dbusservice.add_path('/ProductName', productname)
         self._dbusservice.add_path('/CustomName', customname)
-        self._dbusservice.add_path('/FirmwareVersion', '1.0.3')
+        self._dbusservice.add_path('/FirmwareVersion', '1.0.2')
         #self._dbusservice.add_path('/HardwareVersion', '')
         self._dbusservice.add_path('/Connected', 1)
 
