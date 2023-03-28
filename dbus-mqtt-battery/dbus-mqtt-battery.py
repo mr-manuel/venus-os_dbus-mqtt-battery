@@ -61,15 +61,15 @@ last_changed = 0
 last_updated = 0
 
 #formatting
-_a = lambda p,  v: (str("%.2f" % v) + 'A')
-_ah = lambda p, v: (str("%.2f" % v) + 'Ah')
+_a = lambda p,  v: (str("%.1f" % v) + 'A')
+_ah = lambda p, v: (str("%.1f" % v) + 'Ah')
 _n = lambda p,  v: (str("%i"   % v))
-_p = lambda p,  v: (str("%.2f" % v) + '%')
+_p = lambda p,  v: (str("%i"   % v) + '%')
 _s = lambda p,  v: (str("%s"   % v))
-_t = lambda p,  v: (str("%.2f" % v) + '°C')
+_t = lambda p,  v: (str("%.1f" % v) + '°C')
 _v = lambda p,  v: (str("%.2f" % v) + 'V')
 _v3 = lambda p, v: (str("%.3f" % v) + 'V')
-_w = lambda p,  v: (str("%.2f" % v) + 'W')
+_w = lambda p,  v: (str("%i"   % v) + 'W')
 
 battery_dict = {
 
@@ -354,7 +354,7 @@ class DbusMqttBatteryService:
         self._dbusservice.add_path('/ProductId', 0xFFFF)
         self._dbusservice.add_path('/ProductName', productname)
         self._dbusservice.add_path('/CustomName', customname)
-        self._dbusservice.add_path('/FirmwareVersion', '1.0.2')
+        self._dbusservice.add_path('/FirmwareVersion', '1.0.3')
         #self._dbusservice.add_path('/HardwareVersion', '')
         self._dbusservice.add_path('/Connected', 1)
 
