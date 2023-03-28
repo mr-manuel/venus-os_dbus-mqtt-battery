@@ -48,6 +48,13 @@ else:
     logging.basicConfig(level=logging.WARNING)
 
 
+# get timeout
+if 'DEFAULT' in config and 'timeout' in config['DEFAULT']:
+    timeout = int(config['DEFAULT']['timeout'])
+else:
+    timeout = 60
+
+
 # set variables
 connected = 0
 last_changed = 0
@@ -347,7 +354,7 @@ class DbusMqttBatteryService:
         self._dbusservice.add_path('/ProductId', 0xFFFF)
         self._dbusservice.add_path('/ProductName', productname)
         self._dbusservice.add_path('/CustomName', customname)
-        self._dbusservice.add_path('/FirmwareVersion', '1.0.1')
+        self._dbusservice.add_path('/FirmwareVersion', '1.0.2')
         #self._dbusservice.add_path('/HardwareVersion', '')
         self._dbusservice.add_path('/Connected', 1)
 
@@ -366,6 +373,8 @@ class DbusMqttBatteryService:
         global \
             battery_dict, last_changed, last_updated
 
+        now = int(time.time())
+
         if last_changed != last_updated:
 
             for setting, data in battery_dict.items():
@@ -374,6 +383,11 @@ class DbusMqttBatteryService:
             logging.info("Battery SoC: {:.2f} V - {:.2f} %".format(battery_dict['/Dc/0/Power']['value'], battery_dict['/Soc']['value']))
 
             last_updated = last_changed
+
+        # quit driver if timeout is exceeded
+        if timeout != 0 and (now - last_changed) > timeout:
+            logging.error("Driver stopped. Timeout of %i seconds exceeded, since no new MQTT message was received in this time." % timeout)
+            sys.exit()
 
         # increment UpdateIndex - to show that new data is available
         index = self._dbusservice['/UpdateIndex'] + 1  # increment index

@@ -1,5 +1,8 @@
 # Changelog
 
+## v1.0.2
+* Added: Timeout in order to disconnect the battery, if no new MQTT message is received after x seconds (configurable in `config.ini`)
+
 ## v1.0.1
 * Changed: Corrected descriptions in the full JSON structure
 * Changed: Fixed division by zero when Current = 0 during calculation of Time-to-Go or Voltage = 0 during calculation of Current (thanks to @xury77 for reporting)
