@@ -44,7 +44,9 @@ Copy or rename the `config.sample.ini` to `config.ini` in the `dbus-mqtt-battery
     },
     "Soc": 63,
     "Info": {
-        "MaxChargeVoltage": 55.2
+        "MaxChargeVoltage": 55.2,
+        "MaxChargeCurrent": 80,
+        "MaxDischargeCurrent": 120
     }
 }
 ```
