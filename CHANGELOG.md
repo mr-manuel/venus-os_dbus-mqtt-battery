@@ -1,5 +1,8 @@
 # Changelog
 
+## v1.0.3
+* Added: Check if provided values are string, integer or float
+
 ## v1.0.2
 * Added: Timeout in order to disconnect the battery, if no new MQTT message is received after x seconds (configurable in `config.ini`)
 

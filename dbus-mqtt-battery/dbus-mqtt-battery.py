@@ -397,21 +397,18 @@ class DbusMqttBatteryService:
 
         if last_changed != last_updated:
 
-            try:
-                for setting, data in battery_dict.items():
+            for setting, data in battery_dict.items():
+
+                try:
                     self._dbusservice[setting] = data['value']
 
-            except TypeError as e:
-                logging.error("Type error: %s" % e)
-                logging.error("dict:")
-                print(battery_dict)
-                sys.exit()
+                except TypeError as e:
+                    logging.error("Received key \"" + setting + "\" with value \"" + str(data['value']) + "\" is not valid: " + str(e))
+                    sys.exit()
 
-            except Exception as e:
-                logging.error("Exception occurred: %s" % e)
-                logging.error("dict:")
-                print(battery_dict)
-                sys.exit()
+                except Exception as e:
+                    logging.error("Exception occurred: %s" % e)
+                    sys.exit()
 
             logging.info("Battery SoC: {:.2f} V - {:.2f} %".format(battery_dict['/Dc/0/Power']['value'], battery_dict['/Soc']['value']))
 
