@@ -354,7 +354,7 @@ class DbusMqttBatteryService:
         self._dbusservice.add_path('/ProductId', 0xFFFF)
         self._dbusservice.add_path('/ProductName', productname)
         self._dbusservice.add_path('/CustomName', customname)
-        self._dbusservice.add_path('/FirmwareVersion', '1.0.2')
+        self._dbusservice.add_path('/FirmwareVersion', '1.0.3')
         #self._dbusservice.add_path('/HardwareVersion', '')
         self._dbusservice.add_path('/Connected', 1)
 
@@ -377,8 +377,19 @@ class DbusMqttBatteryService:
 
         if last_changed != last_updated:
 
-            for setting, data in battery_dict.items():
-                self._dbusservice[setting] = data['value']
+            try:
+                for setting, data in battery_dict.items():
+                    self._dbusservice[setting] = data['value']
+
+            except TypeError as e:
+                logging.error("Type error: %s" % e)
+                logging.debug("dict: " + json.dumps(battery_dict))
+                sys.exit()
+
+            except Exception as e:
+                logging.error("Exception occurred: %s" % e)
+                logging.debug("dict: " + json.dumps(battery_dict))
+                sys.exit()
 
             logging.info("Battery SoC: {:.2f} V - {:.2f} %".format(battery_dict['/Dc/0/Power']['value'], battery_dict['/Soc']['value']))
 
