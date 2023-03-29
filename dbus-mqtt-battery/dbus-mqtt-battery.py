@@ -254,7 +254,17 @@ def on_message(client, userdata, msg):
                                 else:
                                     key = '/' + key_1 + '/' + key_2
 
-                                if key in battery_dict:
+                                if (
+                                    key in battery_dict
+                                    and
+                                    (
+                                        type(data_2) is str
+                                        or
+                                        type(data_2) is int
+                                        or
+                                        type(data_2) is float
+                                    )
+                                ):
                                     battery_dict[key]['value'] = data_2
                                 else:
                                     logging.warning("Received key \"" + str(key) + "\" with value \"" + str(data_2) + "\" is not valid")
@@ -262,7 +272,17 @@ def on_message(client, userdata, msg):
                         else:
 
                             key = '/' + key_1
-                            if key in battery_dict:
+                            if (
+                                key in battery_dict
+                                and
+                                (
+                                    type(data_1) is str
+                                    or
+                                    type(data_1) is int
+                                    or
+                                    type(data_1) is float
+                                )
+                            ):
                                 battery_dict[key]['value'] = data_1
                             else:
                                 logging.warning("Received key \"" + str(key) + "\" with value \"" + str(data_1) + "\" is not valid")
@@ -383,12 +403,14 @@ class DbusMqttBatteryService:
 
             except TypeError as e:
                 logging.error("Type error: %s" % e)
-                logging.debug("dict: " + json.dumps(battery_dict))
+                logging.error("dict:")
+                print(battery_dict)
                 sys.exit()
 
             except Exception as e:
                 logging.error("Exception occurred: %s" % e)
-                logging.debug("dict: " + json.dumps(battery_dict))
+                logging.error("dict:")
+                print(battery_dict)
                 sys.exit()
 
             logging.info("Battery SoC: {:.2f} V - {:.2f} %".format(battery_dict['/Dc/0/Power']['value'], battery_dict['/Soc']['value']))
