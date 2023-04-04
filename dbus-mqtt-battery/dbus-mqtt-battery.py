@@ -24,8 +24,9 @@ try:
         print("ERROR:config.ini file is using invalid default values like IP_ADDR_OR_FQDN. The driver restarts in 60 seconds.")
         time.sleep(60)
         sys.exit()
-except:
-    print("ERROR:config.ini file not found. Copy or rename the config.sample.ini to config.ini. The driver restarts in 60 seconds.")
+except Exception as e:
+    print("ERROR: %s" % e)
+    print("If config.ini file is not found then copy or rename the config.sample.ini to config.ini. The driver restarts in 60 seconds.")
     time.sleep(60)
     sys.exit()
 
