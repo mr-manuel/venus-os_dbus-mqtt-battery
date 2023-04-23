@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 
-from gi.repository import GLib
+from gi.repository import GLib  # pyright: ignore[reportMissingImports]
 import platform
 import logging
 import sys
 import os
-import time
+from time import sleep, time
 import json
 import paho.mqtt.client as mqtt
-import configparser # for config/ini file
+import configparser  # for config/ini file
 import _thread
 
 # import Victron Energy packages
@@ -22,12 +22,12 @@ try:
     config.read("%s/config.ini" % (os.path.dirname(os.path.realpath(__file__))))
     if (config['MQTT']['broker_address'] == "IP_ADDR_OR_FQDN"):
         print("ERROR:config.ini file is using invalid default values like IP_ADDR_OR_FQDN. The driver restarts in 60 seconds.")
-        time.sleep(60)
+        sleep(60)
         sys.exit()
 except Exception as e:
     print("ERROR: %s" % e)
     print("If config.ini file is not found then copy or rename the config.sample.ini to config.ini. The driver restarts in 60 seconds.")
-    time.sleep(60)
+    sleep(60)
     sys.exit()
 
 
@@ -56,21 +56,43 @@ else:
     timeout = 60
 
 
+# check if Time-To-Go is enabled in config
+if 'TIME_TO_GO' in config and 'enabled' in config['TIME_TO_GO'] and config['TIME_TO_GO']['enabled'] == '1':
+    TTG_enabled = 1
+else:
+    TTG_enabled = 0
+
+# get soc
+if 'TIME_TO_GO' in config and 'soc' in config['TIME_TO_GO']:
+    TTG_soc = int(config['TIME_TO_GO']['soc'])
+else:
+    TTG_soc = 10
+
+# get recalculation time
+if 'TIME_TO_GO' in config and 'recalculate_every' in config['TIME_TO_GO']:
+    TTG_recalculate_every = int(config['TIME_TO_GO']['recalculate_every'])
+else:
+    TTG_recalculate_every = 300
+
+
 # set variables
 connected = 0
 last_changed = 0
 last_updated = 0
+TTG_update = 0
 
-#formatting
-_a = lambda p,  v: (str("%.1f" % v) + 'A')
-_ah = lambda p, v: (str("%.1f" % v) + 'Ah')
-_n = lambda p,  v: (str("%i"   % v))
-_p = lambda p,  v: (str("%i"   % v) + '%')
-_s = lambda p,  v: (str("%s"   % v))
-_t = lambda p,  v: (str("%.1f" % v) + '°C')
-_v = lambda p,  v: (str("%.2f" % v) + 'V')
-_v3 = lambda p, v: (str("%.3f" % v) + 'V')
-_w = lambda p,  v: (str("%i"   % v) + 'W')
+
+# formatting
+def _a(p, v): return (str("%.1f" % v) + "A")
+def _ah(p, v): return (str("%.1f" % v) + "Ah")
+def _n(p, v): return (str("%i" % v))
+def _p(p, v): return (str("%i" % v) + "%")
+def _s(p, v): return (str("%s" % v))
+def _t(p, v): return (str("%.1f" % v) + "°C")
+def _v(p, v): return (str("%.2f" % v) + "V")
+def _v3(p, v): return (str("%.3f" % v) + "V")
+def _w(p, v): return (str("%i" % v) + "W")
+
 
 battery_dict = {
 
@@ -196,7 +218,6 @@ battery_dict = {
 }
 
 
-
 # MQTT requests
 def on_disconnect(client, userdata, rc):
     global connected
@@ -214,6 +235,7 @@ def on_disconnect(client, userdata, rc):
         logging.error("MQTT client: Error in retrying to connect with broker: %s" % e)
         connected = 0
 
+
 def on_connect(client, userdata, flags, rc):
     global connected
     if rc == 0:
@@ -223,18 +245,20 @@ def on_connect(client, userdata, flags, rc):
     else:
         logging.error("MQTT client: Failed to connect, return code %d\n", rc)
 
+
 def on_message(client, userdata, msg):
     try:
 
         global \
-            battery_dict, last_changed
+            battery_dict, last_changed, \
+            TTG_enabled, TTG_soc, TTG_recalculate_every, TTG_update
 
         # get JSON from topic
         if msg.topic == config['MQTT']['topic']:
             if msg.payload != '' and msg.payload != b'':
                 jsonpayload = json.loads(msg.payload)
 
-                last_changed = int(time.time())
+                last_changed = int(time())
 
                 if (
                     'Dc' in jsonpayload
@@ -290,22 +314,71 @@ def on_message(client, userdata, msg):
 
                     # calculate possible values if missing
                     if 'Current' not in jsonpayload['Dc']:
-                        battery_dict['/Dc/0/Current']['value'] = round( ( battery_dict['/Dc/0/Power']['value'] / battery_dict['/Dc/0/Voltage']['value'] ), 3 ) if battery_dict['/Dc/0/Voltage']['value'] != 0 else 0
+                        battery_dict['/Dc/0/Current']['value'] = round(
+                            (
+                                battery_dict['/Dc/0/Power']['value']
+                                / battery_dict['/Dc/0/Voltage']['value']
+                            ),
+                            3
+                        ) if battery_dict['/Dc/0/Voltage']['value'] != 0 else 0
 
                     if (
                         'Capacity' not in jsonpayload
                         and battery_dict['/InstalledCapacity']['value'] is not None
                         and battery_dict['/ConsumedAmphours']['value'] is not None
                     ):
-                        battery_dict['/Capacity']['value'] = ( battery_dict['/InstalledCapacity']['value'] - battery_dict['/ConsumedAmphours']['value'] )
+                        battery_dict['/Capacity']['value'] = (
+                            battery_dict['/InstalledCapacity']['value'] - battery_dict['/ConsumedAmphours']['value']
+                        )
 
                     if (
                         'TimeToGo' not in jsonpayload
+                        and TTG_enabled == 1
                         and battery_dict['/Dc/0/Current']['value'] is not None
+                        and battery_dict['/InstalledCapacity']['value'] is not None
                         and battery_dict['/Capacity']['value'] is not None
+                        and int(time()) - TTG_update >= TTG_recalculate_every
                     ):
+                        TTG_update = int(time())
+
+                        # charging -> calculate time until 100% SoC
+                        if battery_dict["/Dc/0/Current"]["value"] > 0:
+                            battery_dict["/TimeToGo"]["value"] = abs(
+                                round(
+                                    (
+                                        (
+                                            battery_dict["/InstalledCapacity"]["value"]
+                                            - battery_dict["/Capacity"]["value"]
+                                        )
+                                        / battery_dict["/Dc/0/Current"]["value"]
+                                        * 60
+                                        * 60
+                                    ),
+                                    0,
+                                )
+                            )
+
+                        # discharging -> calculate time until TTG_soc SoC
+                        elif battery_dict["/Dc/0/Current"]["value"] < 0:
+                            battery_dict["/TimeToGo"]["value"] = abs(
+                                round(
+                                    (
+                                        (
+                                            battery_dict["/Capacity"]["value"]
+                                            - (battery_dict["/InstalledCapacity"]["value"] * TTG_soc / 100)
+                                        )
+                                        / battery_dict["/Dc/0/Current"]["value"]
+                                        * 60
+                                        * 60
+                                        * -1
+                                    ),
+                                    0,
+                                )
+                            )
+
                         # if current is 0 display 30 days
-                        battery_dict['/TimeToGo']['value'] = round( ( battery_dict['/Capacity']['value'] / battery_dict['/Dc/0/Current']['value'] * 60 * 60 ), 0 ) if battery_dict['/Dc/0/Current']['value'] != 0 else ( 60 * 60 * 24 * 30 )
+                        else:
+                            battery_dict['/TimeToGo']['value'] = 60 * 60 * 24 * 30
 
                     if 'Voltages' in jsonpayload and len(jsonpayload['Voltages']) > 0:
                         if 'MinVoltageCellId' not in jsonpayload['System']:
@@ -348,7 +421,6 @@ def on_message(client, userdata, msg):
         logging.debug("MQTT payload: " + str(msg.payload)[1:])
 
 
-
 class DbusMqttBatteryService:
     def __init__(
         self,
@@ -376,7 +448,7 @@ class DbusMqttBatteryService:
         self._dbusservice.add_path('/ProductName', productname)
         self._dbusservice.add_path('/CustomName', customname)
         self._dbusservice.add_path('/FirmwareVersion', '1.0.3')
-        #self._dbusservice.add_path('/HardwareVersion', '')
+        # self._dbusservice.add_path('/HardwareVersion', '')
         self._dbusservice.add_path('/Connected', 1)
 
         self._dbusservice.add_path('/Latency', None)
@@ -386,15 +458,14 @@ class DbusMqttBatteryService:
                 path, settings['value'], gettextcallback=settings['textformat'], writeable=True, onchangecallback=self._handlechangedvalue
                 )
 
-        GLib.timeout_add(1000, self._update) # pause 1000ms before the next request
-
+        GLib.timeout_add(1000, self._update)  # pause 1000ms before the next request
 
     def _update(self):
 
         global \
             battery_dict, last_changed, last_updated
 
-        now = int(time.time())
+        now = int(time())
 
         if last_changed != last_updated:
 
@@ -429,17 +500,15 @@ class DbusMqttBatteryService:
 
     def _handlechangedvalue(self, path, value):
         logging.debug("someone else updated %s to %s" % (path, value))
-        return True # accept the change
-
+        return True  # accept the change
 
 
 def main():
-    _thread.daemon = True # allow the program to quit
+    _thread.daemon = True  # allow the program to quit
 
-    from dbus.mainloop.glib import DBusGMainLoop
+    from dbus.mainloop.glib import DBusGMainLoop  # pyright: ignore[reportMissingImports]
     # Have a mainloop, so we can send/receive asynchronous calls to and from dbus
     DBusGMainLoop(set_as_default=True)
-
 
     # MQTT setup
     client = mqtt.Client("MqttBattery_" + str(config['MQTT']['device_instance']))
@@ -466,7 +535,7 @@ def main():
         logging.info("MQTT client: Using username \"%s\" and password to connect" % config['MQTT']['username'])
         client.username_pw_set(username=config['MQTT']['username'], password=config['MQTT']['password'])
 
-     # connect to broker
+    # connect to broker
     client.connect(
         host=config['MQTT']['broker_address'],
         port=int(config['MQTT']['broker_port'])
@@ -480,7 +549,7 @@ def main():
             logging.info("Waiting 5 seconds for receiving first data...")
         else:
             logging.warning("Waiting since %s seconds for receiving first data..." % str(i * 5))
-        time.sleep(5)
+        sleep(5)
         i += 1
 
     paths_dbus = {
@@ -488,8 +557,7 @@ def main():
     }
     paths_dbus.update(battery_dict)
 
-
-    pvac_output = DbusMqttBatteryService(
+    DbusMqttBatteryService(
         servicename='com.victronenergy.battery.mqtt_battery_' + str(config['MQTT']['device_instance']),
         deviceinstance=int(config['MQTT']['device_instance']),
         customname=config['MQTT']['device_name'],
@@ -501,6 +569,5 @@ def main():
     mainloop.run()
 
 
-
 if __name__ == "__main__":
-  main()
+    main()
