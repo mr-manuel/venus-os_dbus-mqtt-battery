@@ -22,7 +22,7 @@
 * Removed: Alarm settings in `config.ini`. All alarms now have to be triggered over MQTT
 
 ## v0.1.0
-* Added: Set logging level in `config.default.ini`
+* Added: Set logging level in `config.ini`
 * Added: A lot of new values that can be set, check `README.md` for details
 * Changed: Fixed topic name in `config.ini`
 * Changed: Logging levels of different messages for clearer output
