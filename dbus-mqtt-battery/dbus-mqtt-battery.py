@@ -18,15 +18,25 @@ from vedbus import VeDbusService
 
 # get values from config.ini file
 try:
-    config = configparser.ConfigParser()
-    config.read("%s/config.ini" % (os.path.dirname(os.path.realpath(__file__))))
-    if (config['MQTT']['broker_address'] == "IP_ADDR_OR_FQDN"):
-        print("ERROR:config.ini file is using invalid default values like IP_ADDR_OR_FQDN. The driver restarts in 60 seconds.")
+    config_file = (os.path.dirname(os.path.realpath(__file__))) + "/config.ini"
+    if os.path.exists(config_file):
+        config = configparser.ConfigParser()
+        config.read(config_file)
+        if (config['MQTT']['broker_address'] == "IP_ADDR_OR_FQDN"):
+            print("ERROR:The \"config.ini\" is using invalid default values like IP_ADDR_OR_FQDN. The driver restarts in 60 seconds.")
+            sleep(60)
+            sys.exit()
+    else:
+        print("ERROR:The \"" + config_file + "\" is not found. Did you copy or rename the \"config.sample.ini\" to \"config.ini\"? The driver restarts in 60 seconds.")
         sleep(60)
         sys.exit()
-except Exception as e:
-    print("ERROR: %s" % e)
-    print("If config.ini file is not found then copy or rename the config.sample.ini to config.ini. The driver restarts in 60 seconds.")
+
+except Exception:
+    exception_type, exception_object, exception_traceback = sys.exc_info()
+    file = exception_traceback.tb_frame.f_code.co_filename
+    line = exception_traceback.tb_lineno
+    print(f"Exception occurred: {repr(exception_object)} of type {exception_type} in {file} line #{line}")
+    print("ERROR:The driver restarts in 60 seconds.")
     sleep(60)
     sys.exit()
 
@@ -416,8 +426,11 @@ def on_message(client, userdata, msg):
         logging.error("Received message is not a valid JSON. %s" % e)
         logging.debug("MQTT payload: " + str(msg.payload)[1:])
 
-    except Exception as e:
-        logging.error("Exception occurred: %s" % e)
+    except Exception:
+        exception_type, exception_object, exception_traceback = sys.exc_info()
+        file = exception_traceback.tb_frame.f_code.co_filename
+        line = exception_traceback.tb_lineno
+        logging.error(f"Exception occurred: {repr(exception_object)} of type {exception_type} in {file} line #{line}")
         logging.debug("MQTT payload: " + str(msg.payload)[1:])
 
 
@@ -478,9 +491,11 @@ class DbusMqttBatteryService:
                     logging.error("Received key \"" + setting + "\" with value \"" + str(data['value']) + "\" is not valid: " + str(e))
                     sys.exit()
 
-                except Exception as e:
-                    logging.error("Exception occurred: %s" % e)
-                    sys.exit()
+                except Exception:
+                    exception_type, exception_object, exception_traceback = sys.exc_info()
+                    file = exception_traceback.tb_frame.f_code.co_filename
+                    line = exception_traceback.tb_lineno
+                    logging.error(f"Exception occurred: {repr(exception_object)} of type {exception_type} in {file} line #{line}")
 
             logging.info("Battery SoC: {:.2f} V - {:.2f} %".format(battery_dict['/Dc/0/Power']['value'], battery_dict['/Soc']['value']))
 
