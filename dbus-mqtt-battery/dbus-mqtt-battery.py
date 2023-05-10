@@ -391,16 +391,16 @@ def on_message(client, userdata, msg):
                             battery_dict['/TimeToGo']['value'] = 60 * 60 * 24 * 30
 
                     if 'Voltages' in jsonpayload and len(jsonpayload['Voltages']) > 0:
-                        if 'MinVoltageCellId' not in jsonpayload['System']:
+                        if 'System' not in jsonpayload or 'MinVoltageCellId' not in jsonpayload['System']:
                             battery_dict['/System/MinVoltageCellId']['value'] = min(jsonpayload['Voltages'], key=jsonpayload['Voltages'].get)
 
-                        if 'MinCellVoltage' not in jsonpayload['System']:
+                        if 'System' not in jsonpayload or 'MinCellVoltage' not in jsonpayload['System']:
                             battery_dict['/System/MinCellVoltage']['value'] = min(jsonpayload['Voltages'].values())
 
-                        if 'MaxVoltageCellId' not in jsonpayload['System']:
+                        if 'System' not in jsonpayload or 'MaxVoltageCellId' not in jsonpayload['System']:
                             battery_dict['/System/MaxVoltageCellId']['value'] = max(jsonpayload['Voltages'], key=jsonpayload['Voltages'].get)
 
-                        if 'MaxCellVoltage' not in jsonpayload['System']:
+                        if 'System' not in jsonpayload or 'MaxCellVoltage' not in jsonpayload['System']:
                             battery_dict['/System/MaxCellVoltage']['value'] = max(jsonpayload['Voltages'].values())
 
                         if 'Sum' not in jsonpayload['Voltages']:
@@ -460,7 +460,7 @@ class DbusMqttBatteryService:
         self._dbusservice.add_path('/ProductId', 0xFFFF)
         self._dbusservice.add_path('/ProductName', productname)
         self._dbusservice.add_path('/CustomName', customname)
-        self._dbusservice.add_path('/FirmwareVersion', '1.0.3')
+        self._dbusservice.add_path('/FirmwareVersion', '1.0.4')
         # self._dbusservice.add_path('/HardwareVersion', '')
         self._dbusservice.add_path('/Connected', 1)
 
