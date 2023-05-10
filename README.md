@@ -255,3 +255,10 @@ It was tested on following devices:
 ![MQTT Battery - device list - mqtt battery](/screenshots/battery_device_list_mqtt-battery_12.png)
 
 </details>
+
+
+## Supporting/Sponsoring this project
+
+You like the project and you want to support me?
+
+[<img src="https://github.md0.eu/uploads/donate-button.svg" height="50">](https://www.paypal.com/donate/?hosted_button_id=3NEVZBDM5KABW)
