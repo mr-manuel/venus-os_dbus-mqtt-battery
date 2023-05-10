@@ -65,8 +65,8 @@ Please remove the `--> *` comments to get a valid `JSON`. Comments are not allow
         "Temperature": 23                     --> Celsius
     },
     "InstalledCapacity": 200.0,               --> Ampere hours - total battery capacity
-    "ConsumedAmphours": 74.5,                 --> Ampere hours - consumed (only positive values)
-    "Capacity": 125.5,                        --> Ampere hours - remaining (only positive values) - if missing in the JSON, than gets calculated when "InstalledCapacity" and "ConsumedAmphours" are set
+    "ConsumedAmphours": 74.5,                 --> Ampere hours - consumed (only positive values) - if missing in the JSON, than gets calculated when "InstalledCapacity" and "Capacity" are set OR only "InstalledCapacity" is set
+    "Capacity": 125.5,                        --> Ampere hours - remaining (only positive values) - if missing in the JSON, than gets calculated when "InstalledCapacity" and "ConsumedAmphours" are set OR only "InstalledCapacity" is set
     "Soc": 63,                                --> Percent (0-100) - state of charge
     "TimeToGo": 43967,                        --> Seconds - time until the battery is empty - if missing in the JSON, than gets calculated when "Capacity" is set or calculated
     "Balancing": 0,                           --> Int - 0 = inactive; 1 = active

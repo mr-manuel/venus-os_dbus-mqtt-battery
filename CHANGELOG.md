@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.0.5
+* Added: Calculation of `ConsumedAmphours` when `InstalledCapacity` and `Capacity` is provided, if empty
+* Added: Calculation of `ConsumedAmphours` and `Capacity` when `InstalledCapacity` is provided, if empty
+
 ## v1.0.4
 * Changed: Fixed errors for `MinVoltageCellId`, `MinCellVoltage`, `MaxVoltageCellId` and `MaxCellVoltage` calculations
 * Changed: Improved error handling and output

@@ -322,7 +322,8 @@ def on_message(client, userdata, msg):
                             else:
                                 logging.warning("Received key \"" + str(key) + "\" with value \"" + str(data_1) + "\" is not valid")
 
-                    # calculate possible values if missing
+                    # ------ calculate possible values if missing -----
+                    # Current
                     if 'Current' not in jsonpayload['Dc']:
                         battery_dict['/Dc/0/Current']['value'] = round(
                             (
@@ -332,6 +333,17 @@ def on_message(client, userdata, msg):
                             3
                         ) if battery_dict['/Dc/0/Voltage']['value'] != 0 else 0
 
+                    # ConsumedAmphours
+                    if (
+                        'ConsumedAmphours' not in jsonpayload
+                        and battery_dict['/InstalledCapacity']['value'] is not None
+                        and battery_dict['/Capacity']['value'] is not None
+                    ):
+                        battery_dict['/ConsumedAmphours']['value'] = (
+                            battery_dict['/InstalledCapacity']['value'] - battery_dict['/Capacity']['value']
+                        )
+
+                    # Capacity
                     if (
                         'Capacity' not in jsonpayload
                         and battery_dict['/InstalledCapacity']['value'] is not None
@@ -341,6 +353,20 @@ def on_message(client, userdata, msg):
                             battery_dict['/InstalledCapacity']['value'] - battery_dict['/ConsumedAmphours']['value']
                         )
 
+                    # ConsumedAmphours & Capacity based on InstalledCapacity and SoC
+                    if (
+                        'ConsumedAmphours' not in jsonpayload
+                        and 'Capacity' not in jsonpayload
+                        and battery_dict['/InstalledCapacity']['value'] is not None
+                    ):
+                        battery_dict['/ConsumedAmphours']['value'] = (
+                            round(battery_dict['/InstalledCapacity']['value'] * (100 - battery_dict['/Soc']['value']) / 100, 2)
+                        )
+                        battery_dict['/Capacity']['value'] = (
+                            round(battery_dict['/InstalledCapacity']['value'] * battery_dict['/Soc']['value'] / 100, 2)
+                        )
+
+                    # TimeToGo
                     if (
                         'TimeToGo' not in jsonpayload
                         and TTG_enabled == 1
@@ -390,6 +416,7 @@ def on_message(client, userdata, msg):
                         else:
                             battery_dict['/TimeToGo']['value'] = 60 * 60 * 24 * 30
 
+                    # MinVoltageCellId, MinCellVoltage, MaxVoltageCellId, MaxCellVoltage, Sum, Diff
                     if 'Voltages' in jsonpayload and len(jsonpayload['Voltages']) > 0:
                         if 'System' not in jsonpayload or 'MinVoltageCellId' not in jsonpayload['System']:
                             battery_dict['/System/MinVoltageCellId']['value'] = min(jsonpayload['Voltages'], key=jsonpayload['Voltages'].get)
@@ -460,7 +487,7 @@ class DbusMqttBatteryService:
         self._dbusservice.add_path('/ProductId', 0xFFFF)
         self._dbusservice.add_path('/ProductName', productname)
         self._dbusservice.add_path('/CustomName', customname)
-        self._dbusservice.add_path('/FirmwareVersion', '1.0.4')
+        self._dbusservice.add_path('/FirmwareVersion', '1.0.5')
         # self._dbusservice.add_path('/HardwareVersion', '')
         self._dbusservice.add_path('/Connected', 1)
 
