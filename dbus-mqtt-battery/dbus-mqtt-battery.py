@@ -237,13 +237,16 @@ def on_disconnect(client, userdata, rc):
     else:
         logging.warning('MQTT client: rc value:' + str(rc))
 
-    try:
-        logging.warning("MQTT client: Trying to reconnect")
-        client.connect(config['MQTT']['broker_address'])
-        connected = 1
-    except Exception as e:
-        logging.error("MQTT client: Error in retrying to connect with broker: %s" % e)
-        connected = 0
+    while connected == 0:
+        try:
+            logging.warning("MQTT client: Trying to reconnect")
+            client.connect(config['MQTT']['broker_address'])
+            connected = 1
+        except Exception as err:
+            logging.error(f"MQTT client: Error in retrying to connect with broker ({config['MQTT']['broker_address']}:{config['MQTT']['broker_port']}): {err}")
+            logging.error("MQTT client: Retrying in 15 seconds")
+            connected = 0
+            sleep(15)
 
 
 def on_connect(client, userdata, flags, rc):
@@ -487,7 +490,7 @@ class DbusMqttBatteryService:
         self._dbusservice.add_path('/ProductId', 0xFFFF)
         self._dbusservice.add_path('/ProductName', productname)
         self._dbusservice.add_path('/CustomName', customname)
-        self._dbusservice.add_path('/FirmwareVersion', '1.0.5')
+        self._dbusservice.add_path('/FirmwareVersion', '1.0.6 (20230518)')
         # self._dbusservice.add_path('/HardwareVersion', '')
         self._dbusservice.add_path('/Connected', 1)
 
@@ -578,6 +581,7 @@ def main():
         client.username_pw_set(username=config['MQTT']['username'], password=config['MQTT']['password'])
 
     # connect to broker
+    logging.info(f"MQTT client: Connecting to broker {config['MQTT']['broker_address']} on port {config['MQTT']['broker_port']}")
     client.connect(
         host=config['MQTT']['broker_address'],
         port=int(config['MQTT']['broker_port'])

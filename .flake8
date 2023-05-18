@@ -1,7 +1,7 @@
 [flake8]
-max-line-length = 180
+max-line-length = 216
 exclude =
-        ./dbus-mqtt-battery/ext
+    ./dbus-mqtt-battery/ext
 extend-ignore:
     # E203 whitespace before ':' conflicts with black code formatting. Will be ignored in flake8
     E203

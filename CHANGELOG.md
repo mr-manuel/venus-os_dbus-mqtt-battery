@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.0.6
+* Added: Show to which broker and port the connection was made when logging is set to INFO
+* Added: Try to reconnect every 15 seconds to MQTT broker, if connection is closed abnormally
+* Changed: Colors of cell voltage background on the cell voltages page to apply correctly the dark mode
+
 ## v1.0.5
 * Added: Calculation of `ConsumedAmphours` when `InstalledCapacity` and `Capacity` is provided, if empty
 * Added: Calculation of `ConsumedAmphours` and `Capacity` when `InstalledCapacity` is provided, if empty
