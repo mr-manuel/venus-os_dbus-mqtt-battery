@@ -1,5 +1,8 @@
 # Changelog
 
+## v1.0.7
+* Added: Timeout on driver startup. Prevents problems, if the MQTT broker is not reachable on driver startup
+
 ## v1.0.6
 * Added: Show to which broker and port the connection was made when logging is set to INFO
 * Added: Try to reconnect every 15 seconds to MQTT broker, if connection is closed abnormally

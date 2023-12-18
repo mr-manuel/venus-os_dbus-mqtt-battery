@@ -1,5 +1,6 @@
 #!/bin/bash
-set -x
+# set -x
+
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 # elaborate version string for better comparing
