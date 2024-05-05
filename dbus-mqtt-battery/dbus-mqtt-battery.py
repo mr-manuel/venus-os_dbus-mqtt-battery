@@ -556,7 +556,7 @@ def main():
     DBusGMainLoop(set_as_default=True)
 
     # MQTT setup
-    client = mqtt.Client("MqttBattery_" + str(config['MQTT']['device_instance']))
+    client = mqtt.Client("MqttBattery_" + str(config['DEFAULT']['device_instance']))
     client.on_disconnect = on_disconnect
     client.on_connect = on_connect
     client.on_message = on_message
@@ -613,9 +613,9 @@ def main():
     paths_dbus.update(battery_dict)
 
     DbusMqttBatteryService(
-        servicename='com.victronenergy.battery.mqtt_battery_' + str(config['MQTT']['device_instance']),
-        deviceinstance=int(config['MQTT']['device_instance']),
-        customname=config['MQTT']['device_name'],
+        servicename='com.victronenergy.battery.mqtt_battery_' + str(config['DEFAULT']['device_instance']),
+        deviceinstance=int(config['DEFAULT']['device_instance']),
+        customname=config['DEFAULT']['device_name'],
         paths=paths_dbus
         )
 
