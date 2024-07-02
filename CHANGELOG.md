@@ -1,5 +1,8 @@
 # Changelog
 
+## v1.0.8
+* Changed: Fixed problems when timeout was set to `0`.
+
 ## v1.0.7
 * Added: Timeout on driver startup. Prevents problems, if the MQTT broker is not reachable on driver startup
 
