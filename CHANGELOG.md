@@ -1,6 +1,7 @@
 # Changelog
 
 ## v1.0.9
+* Changed: Add VRM ID to MQTT client name
 * Changed: Fix registration to dbus https://github.com/victronenergy/velib_python/commit/494f9aef38f46d6cfcddd8b1242336a0a3a79563
 
 ## v1.0.8

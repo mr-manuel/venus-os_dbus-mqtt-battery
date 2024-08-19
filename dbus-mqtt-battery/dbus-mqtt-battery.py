@@ -13,7 +13,8 @@ import _thread
 
 # import Victron Energy packages
 sys.path.insert(1, os.path.join(os.path.dirname(__file__), 'ext', 'velib_python'))
-from vedbus import VeDbusService
+from vedbus import VeDbusService  # noqa: E402
+from ve_utils import get_vrm_portal_id  # noqa: E402
 
 
 # get values from config.ini file
@@ -490,7 +491,7 @@ class DbusMqttBatteryService:
         self._dbusservice.add_path('/ProductId', 0xFFFF)
         self._dbusservice.add_path('/ProductName', productname)
         self._dbusservice.add_path('/CustomName', customname)
-        self._dbusservice.add_path('/FirmwareVersion', '1.0.8 (20240702)')
+        self._dbusservice.add_path('/FirmwareVersion', '1.0.9 (20240819)')
         # self._dbusservice.add_path('/HardwareVersion', '')
         self._dbusservice.add_path('/Connected', 1)
 
@@ -559,7 +560,7 @@ def main():
     DBusGMainLoop(set_as_default=True)
 
     # MQTT setup
-    client = mqtt.Client("MqttBattery_" + str(config['DEFAULT']['device_instance']))
+    client = mqtt.Client("MqttBattery_" + get_vrm_portal_id() + "_" + str(config['DEFAULT']['device_instance']))
     client.on_disconnect = on_disconnect
     client.on_connect = on_connect
     client.on_message = on_message
