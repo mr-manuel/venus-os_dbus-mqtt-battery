@@ -1,5 +1,8 @@
 # Changelog
 
+## v1.0.9
+* Changed: Fix registration to dbus https://github.com/victronenergy/velib_python/commit/494f9aef38f46d6cfcddd8b1242336a0a3a79563
+
 ## v1.0.8
 * Changed: Fixed problems when timeout was set to `0`.
 

@@ -475,7 +475,7 @@ class DbusMqttBatteryService:
         connection='MQTT Battery service'
     ):
 
-        self._dbusservice = VeDbusService(servicename)
+        self._dbusservice = VeDbusService(servicename, register=False)
         self._paths = paths
 
         logging.debug("%s /DeviceInstance = %d" % (servicename, deviceinstance))
@@ -500,6 +500,9 @@ class DbusMqttBatteryService:
             self._dbusservice.add_path(
                 path, settings['value'], gettextcallback=settings['textformat'], writeable=True, onchangecallback=self._handlechangedvalue
                 )
+
+        # register VeDbusService after all paths where added
+        self._dbusservice.register()
 
         GLib.timeout_add(1000, self._update)  # pause 1000ms before the next request
 
