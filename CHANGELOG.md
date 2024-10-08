@@ -2,6 +2,7 @@
 
 ## v1.0.10-dev
 * Changed: Broker port missing on reconnect
+* Changed: Fixed service not starting sometimes
 
 ## v1.0.9
 * Changed: Add VRM ID to MQTT client name
