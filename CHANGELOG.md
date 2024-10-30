@@ -2,6 +2,7 @@
 
 ## v1.0.10-dev
 * Changed: Broker port missing on reconnect
+* Changed: Default device instance is now `100`
 * Changed: Fixed service not starting sometimes
 
 ## v1.0.9
