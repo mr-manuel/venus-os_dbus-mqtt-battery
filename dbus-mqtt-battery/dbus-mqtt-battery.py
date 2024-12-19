@@ -177,6 +177,7 @@ battery_dict = {
     "/System/MaxTemperatureCellId": {"value": None, "textformat": _s},
     "/System/MaxCellTemperature": {"value": None, "textformat": _t},
     "/System/MOSTemperature": {"value": None, "textformat": _t},
+    "/System/NrOfCellsPerBattery": {"value": 0, "textformat": _n},
     "/System/NrOfModulesOnline": {"value": 1, "textformat": _n},
     "/System/NrOfModulesOffline": {"value": 0, "textformat": _n},
     "/System/NrOfModulesBlockingCharge": {"value": 0, "textformat": _n},
