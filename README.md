@@ -134,6 +134,7 @@ Please remove the `--> *` comments to get a valid `JSON`. Comments are not allow
 
         "NrOfModulesOnline": 0,               --> Number - How many modules are online
         "NrOfModulesOffline": 0,              --> Number - How many modules are offline
+        "NrOfCellsPerBattery: 0,              --> Number - How many celle are in the battery
 
         "NrOfModulesBlockingCharge": 0,       --> Number - How many modules are blocking charge
         "NrOfModulesBlockingDischarge": 0     --> Number - How many modules are blocking discharge
