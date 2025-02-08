@@ -1,6 +1,7 @@
 # Changelog
 
 ## v1.0.10-dev
+* Added: Read data from dbus-serialbattery MQTT JsonData topic
 * Changed: Broker port missing on reconnect
 * Changed: Default device instance is now `100`
 * Changed: Fixed service not starting sometimes

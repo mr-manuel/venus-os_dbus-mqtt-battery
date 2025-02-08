@@ -238,7 +238,71 @@ battery_dict = {
     "/Io/AllowToDischarge": {"value": None, "textformat": _n},
     "/Io/AllowToBalance": {"value": None, "textformat": _n},
     "/Io/ExternalRelay": {"value": None, "textformat": _n},
+    # EXTRA
+    "/Alarms/BmsCable": {"value": None, "textformat": _n},
+    "/Alarms/HighCellVoltage": {"value": None, "textformat": _n},
+    "/Alarms/HighInternalTemperature": {"value": None, "textformat": _n},
+    "/Alarms/InternalFailure": {"value": None, "textformat": _n},
+    "/Alarms/StateOfHealth": {"value": None, "textformat": _n},
+    "/ConnectionInformation": {"value": None, "textformat": _s},
+    "/CurrentAvg": {"value": None, "textformat": _a},
+    "/Dc/0/MidVoltage": {"value": None, "textformat": _v},
+    "/Dc/0/MidVoltageDeviation": {"value": None, "textformat": _v},
+    "/History/AverageDischarge": {"value": None, "textformat": _n},
+    "/History/ChargedEnergy": {"value": None, "textformat": _n},
+    "/History/DeepestDischarge": {"value": None, "textformat": _n},
+    "/History/DischargedEnergy": {"value": None, "textformat": _n},
+    "/History/FullDischarges": {"value": None, "textformat": _n},
+    "/History/HighVoltageAlarms": {"value": None, "textformat": _n},
+    "/History/LastDischarge": {"value": None, "textformat": _n},
+    "/History/LowVoltageAlarms": {"value": None, "textformat": _n},
+    "/History/MaximumCellVoltage": {"value": None, "textformat": _n},
+    "/History/MaximumTemperature": {"value": None, "textformat": _n},
+    "/History/MinimumCellVoltage": {"value": None, "textformat": _n},
+    "/History/MinimumTemperature": {"value": None, "textformat": _n},
+    "/History/TimeSinceLastFullCharge": {"value": None, "textformat": _n},
+    "/Info/BatteryLowVoltage": {"value": None, "textformat": _n},
+    "/Info/ChargeLimitation": {"value": None, "textformat": _a},
+    "/Info/ChargeMode": {"value": None, "textformat": _s},
+    "/Info/DischargeLimitation": {"value": None, "textformat": _a},
+    "/Io/ForceChargingOff": {"value": None, "textformat": _n},
+    "/Io/ForceDischargingOff": {"value": None, "textformat": _n},
+    "/Io/TurnBalancingOff": {"value": None, "textformat": _n},
+    "/Settings/HasTemperature": {"value": None, "textformat": _n},
+    "/SocBms": {"value": None, "textformat": _p},
+    "/State": {"value": None, "textformat": _n},
+    "/System/Temperature1": {"value": None, "textformat": _t},
+    "/System/Temperature1Name": {"value": None, "textformat": _n},
+    "/System/Temperature2": {"value": None, "textformat": _t},
+    "/System/Temperature2Name": {"value": None, "textformat": _n},
+    "/System/Temperature3": {"value": None, "textformat": _t},
+    "/System/Temperature3Name": {"value": None, "textformat": _n},
+    "/System/Temperature4": {"value": None, "textformat": _t},
+    "/System/Temperature4Name": {"value": None, "textformat": _n},
 }
+
+ignore_list = [
+    "/FirmwareVersion",
+    "/HardwareVersion",
+    "/Connected",
+    "/CustomName",
+    "/DeviceInstance",
+    "/DeviceName",
+    "/ErrorCode",
+    "/Family",
+    "/Manufacturer",
+    "/Mgmt/Connection",
+    "/Mgmt/ProcessName",
+    "/Mgmt/ProcessVersion",
+    "/ProductId",
+    "/ProductName",
+    "/Serial",
+    "/Info/ChargeModeDebug",
+    "/Info/ChargeModeDebugFloat",
+    "/Info/ChargeModeDebugBulk",
+    "/History/CanBeCleared",
+    "/History/Clear",
+]
 
 
 # MQTT requests
@@ -284,7 +348,14 @@ def on_message(client, userdata, msg):
 
                 last_changed = int(time())
 
-                if "Dc" in jsonpayload and "Soc" in jsonpayload and "Power" in jsonpayload["Dc"] and "Voltage" in jsonpayload["Dc"]:
+                if "value" in jsonpayload:
+                    jsonpayload = json.loads(jsonpayload["value"])
+
+                if (
+                    "Dc" in jsonpayload
+                    and "Soc" in jsonpayload
+                    and (("Power" in jsonpayload["Dc"] and "Voltage" in jsonpayload["Dc"]) or ("0" in jsonpayload["Dc"] and "Power" in jsonpayload["Dc"]["0"] and "Voltage" in jsonpayload["Dc"]["0"]))
+                ):
 
                     # save JSON data into battery_dict
                     for key_1, data_1 in jsonpayload.items():
@@ -294,22 +365,40 @@ def on_message(client, userdata, msg):
                             for key_2, data_2 in data_1.items():
 
                                 if key_1 == "Dc":
-                                    key = "/" + key_1 + "/0/" + key_2
+
+                                    # logging.error(f"data_1: {data_1}")
+                                    # logging.error(f"data_2: {data_2}")
+
+                                    if "0" in data_1:
+
+                                        for key_3, data_3 in data_2.items():
+                                            key = "/" + key_1 + "/" + key_2 + "/" + key_3
+                                            if key in battery_dict and (type(data_3) is str or type(data_3) is int or type(data_3) is float):
+                                                battery_dict[key]["value"] = data_3 if data_3 else None
+                                            elif key not in ignore_list:
+                                                logging.warning('#3 Received key "' + str(key) + '" with value "' + str(data_3) + '" is not valid')
+
+                                    else:
+                                        key = "/" + key_1 + "/0/" + key_2
+                                        if key in battery_dict and (type(data_2) is str or type(data_2) is int or type(data_2) is float):
+                                            battery_dict[key]["value"] = data_2 if data_2 else None
+                                        elif key not in ignore_list:
+                                            logging.warning('#2 Received key "' + str(key) + '" with value "' + str(data_2) + '" is not valid')
+
                                 else:
                                     key = "/" + key_1 + "/" + key_2
-
-                                if key in battery_dict and (type(data_2) is str or type(data_2) is int or type(data_2) is float):
-                                    battery_dict[key]["value"] = data_2
-                                else:
-                                    logging.warning('Received key "' + str(key) + '" with value "' + str(data_2) + '" is not valid')
+                                    if key in battery_dict and (type(data_2) is str or type(data_2) is int or type(data_2) is float):
+                                        battery_dict[key]["value"] = data_2 if data_2 else None
+                                    elif key not in ignore_list:
+                                        logging.warning('#2 Received key "' + str(key) + '" with value "' + str(data_2) + '" is not valid')
 
                         else:
 
                             key = "/" + key_1
                             if key in battery_dict and (type(data_1) is str or type(data_1) is int or type(data_1) is float):
-                                battery_dict[key]["value"] = data_1
-                            else:
-                                logging.warning('Received key "' + str(key) + '" with value "' + str(data_1) + '" is not valid')
+                                battery_dict[key]["value"] = data_1 if data_1 else None
+                            elif key not in ignore_list:
+                                logging.warning('#1 Received key "' + str(key) + '" with value "' + str(data_1) + '" is not valid')
 
                     # ------ calculate possible values if missing -----
                     # Current
@@ -449,7 +538,7 @@ class DbusMqttBatteryService:
         self._dbusservice.add_path("/ProductId", 0xFFFF)
         self._dbusservice.add_path("/ProductName", productname)
         self._dbusservice.add_path("/CustomName", customname)
-        self._dbusservice.add_path("/FirmwareVersion", "1.0.10-dev (20241008)")
+        self._dbusservice.add_path("/FirmwareVersion", "1.0.10-dev (20241223)")
         # self._dbusservice.add_path('/HardwareVersion', '')
         self._dbusservice.add_path("/Connected", 1)
 

@@ -9,6 +9,8 @@
 1. [Purpose](#purpose)
 1. [Config](#config)
 1. [JSON structure](#json-structure)
+    - [Generic device](#generic-device)
+    - [dbus-serialbattery](#dbus-serialbattery)
 1. [Install / Update](#install--update)
 1. [Uninstall](#uninstall)
 1. [Restart](#restart)
@@ -43,6 +45,8 @@ Copy or rename the `config.sample.ini` to `config.ini` in the `dbus-mqtt-battery
 
 ## JSON structure
 
+### Generic device
+
 <details><summary>Minimum required to start the driver</summary>
 
 ```json
@@ -54,6 +58,7 @@ Copy or rename the `config.sample.ini` to `config.ini` in the `dbus-mqtt-battery
     "Soc": 63
 }
 ```
+
 </details>
 
 <details><summary>Minimum required that the MTTP is controlled by BMS</summary>
@@ -72,6 +77,7 @@ Copy or rename the `config.sample.ini` to `config.ini` in the `dbus-mqtt-battery
     }
 }
 ```
+
 </details>
 
 <details><summary>Full (with descriptions)</summary>
@@ -199,54 +205,79 @@ Please remove the `--> *` comments to get a valid `JSON`. Comments are not allow
     }
 }
 ```
+
 </details>
 
+### dbus-serialbattery
+
+If you want to get the values from [`dbus-serialbattery`](https://github.com/mr-manuel/venus-os_dbus-serialbattery) without having to modify any data with Node-RED or other scripts, then with [`dbus-serialbattery`](https://github.com/mr-manuel/venus-os_dbus-serialbattery) version `v2.0.20241223dev` (or later) and `dbus-mqtt-battery` version `v1.0.10-dev (20241223)` (or later) this is easily possible.
+
+To achieve this you need to:
+
+1. Make sure to enable `PUBLISH_BATTERY_DATA_AS_JSON` in the `dbus-serialbattery` [`config.ini`](https://github.com/mr-manuel/venus-os_dbus-serialbattery/blob/f769aebeac3eb7a51b5f9c4e26ac3dd422d42eff/dbus-serialbattery/config.default.ini#L461-L463), since it's disabled by default. Restart `dbus-serialbattery` after you made the changes.
+
+   Now the aggregated data is published to `/N/<VRM_ID>/battery/<BATTERY_INSTANCE>/JsonData` on the Venus OS MQTT broker.
+2. In the `config.ini` of `dbus-mqtt-battery` set the Venus MQTT broker and the topic `/N/<VRM_ID>/battery/<BATTERY_INSTANCE>/JsonData` where the data is published.
+
+Replace the placeholders `<...>` with your values.
+
+This method will fetch automatically all available data for a specific battery from `dbus-serialbattery`. You cannot choose which data you need or not.
 
 ## Install / Update
 
 1. Login to your Venus OS device via SSH. See [Venus OS:Root Access](https://www.victronenergy.com/live/ccgx:root_access#root_access) for more details.
-
 2. Execute this commands to download and copy the files:
 
     ```bash
+
     wget -O /tmp/download_dbus-mqtt-battery.sh https://raw.githubusercontent.com/mr-manuel/venus-os_dbus-mqtt-battery/master/download.sh
 
     bash /tmp/download_dbus-mqtt-battery.sh
+
     ```
-
 3. Select the version you want to install.
-
 4. Press enter for a single instance. For multiple instances, enter a number and press enter.
 
     Example:
 
-    - Pressing enter or entering `1` will install the driver to `/data/etc/dbus-mqtt-battery`.
-    - Entering `2` will install the driver to `/data/etc/dbus-mqtt-battery-2`.
+   - Pressing enter or entering `1` will install the driver to `/data/etc/dbus-mqtt-battery`.
+   - Entering `2` will install the driver to `/data/etc/dbus-mqtt-battery-2`.
 
 ### Extra steps for your first installation
 
 5. Edit the config file to fit your needs. The correct command for your installation is shown after the installation.
 
-    - If you pressed enter or entered `1` during installation:
+   - If you pressed enter or entered `1` during installation:
+
     ```bash
+
     nano /data/etc/dbus-mqtt-battery/config.ini
+
     ```
 
-    - If you entered `2` during installation:
+   - If you entered `2` during installation:
+
     ```bash
-    nano /data/etc/dbus-mqtt-battery-2/config.ini
-    ```
 
+    nano /data/etc/dbus-mqtt-battery-2/config.ini
+
+    ```
 6. Install the driver as a service. The correct command for your installation is shown after the installation.
 
-    - If you pressed enter or entered `1` during installation:
+   - If you pressed enter or entered `1` during installation:
+
     ```bash
+
     bash /data/etc/dbus-mqtt-battery/install.sh
+
     ```
 
-    - If you entered `2` during installation:
+   - If you entered `2` during installation:
+
     ```bash
+
     bash /data/etc/dbus-mqtt-battery-2/install.sh
+
     ```
 
     The daemon-tools should start this service automatically within seconds.
@@ -256,13 +287,18 @@ Please remove the `--> *` comments to get a valid `JSON`. Comments are not allow
 ⚠️ If you have multiple instances, ensure you choose the correct one. For example:
 
 - To uninstall the default instance:
-    ```bash
-    bash /data/etc/dbus-mqtt-battery/uninstall.sh
-    ```
 
-- To uninstall the second instance:
     ```bash
+
+    bash /data/etc/dbus-mqtt-battery/uninstall.sh
+
+    ```
+- To uninstall the second instance:
+
+    ```bash
+
     bash /data/etc/dbus-mqtt-battery-2/uninstall.sh
+
     ```
 
 ## Restart
@@ -270,13 +306,18 @@ Please remove the `--> *` comments to get a valid `JSON`. Comments are not allow
 ⚠️ If you have multiple instances, ensure you choose the correct one. For example:
 
 - To restart the default instance:
-    ```bash
-    bash /data/etc/dbus-mqtt-battery/restart.sh
-    ```
 
-- To restart the second instance:
     ```bash
+
+    bash /data/etc/dbus-mqtt-battery/restart.sh
+
+    ```
+- To restart the second instance:
+
+    ```bash
+
     bash /data/etc/dbus-mqtt-battery-2/restart.sh
+
     ```
 
 ## Debugging
@@ -284,13 +325,18 @@ Please remove the `--> *` comments to get a valid `JSON`. Comments are not allow
 ⚠️ If you have multiple instances, ensure you choose the correct one.
 
 - To check the logs of the default instance:
-    ```bash
-    tail -n 100 -F /data/log/dbus-mqtt-battery/current | tai64nlocal
-    ```
 
-- To check the logs of the second instance:
     ```bash
+
+    tail -n 100 -F /data/log/dbus-mqtt-battery/current | tai64nlocal
+
+    ```
+- To check the logs of the second instance:
+
+    ```bash
+
     tail -n 100 -F /data/log/dbus-mqtt-battery-2/current | tai64nlocal
+
     ```
 
 The service status can be checked with svstat `svstat /service/dbus-mqtt-battery`
@@ -301,7 +347,6 @@ If the seconds are under 5 then the service crashes and gets restarted all the t
 
 If the script stops with the message `dbus.exceptions.NameExistsException: Bus name already exists: com.victronenergy.battery.mqtt_battery"` it means that the service is still running or another service is using that bus name.
 
-
 ## Compatibility
 
 This software supports the latest three stable versions of Venus OS. It may also work on older versions, but this is not guaranteed.
@@ -311,18 +356,31 @@ This software supports the latest three stable versions of Venus OS. It may also
 <details><summary>MQTT Battery</summary>
 
 ![MQTT Battery - pages](/screenshots/battery_pages.png)
+
 ![MQTT Battery - device list](/screenshots/battery_device_list.png)
+
 ![MQTT Battery - device list - mqtt battery](/screenshots/battery_device_list_mqtt-battery_1.png)
+
 ![MQTT Battery - device list - mqtt battery](/screenshots/battery_device_list_mqtt-battery_2.png)
+
 ![MQTT Battery - device list - mqtt battery](/screenshots/battery_device_list_mqtt-battery_3.png)
+
 ![MQTT Battery - device list - mqtt battery](/screenshots/battery_device_list_mqtt-battery_4.png)
+
 ![MQTT Battery - device list - mqtt battery](/screenshots/battery_device_list_mqtt-battery_5.png)
+
 ![MQTT Battery - device list - mqtt battery](/screenshots/battery_device_list_mqtt-battery_6.png)
+
 ![MQTT Battery - device list - mqtt battery](/screenshots/battery_device_list_mqtt-battery_7.png)
+
 ![MQTT Battery - device list - mqtt battery](/screenshots/battery_device_list_mqtt-battery_8.png)
+
 ![MQTT Battery - device list - mqtt battery](/screenshots/battery_device_list_mqtt-battery_9.png)
+
 ![MQTT Battery - device list - mqtt battery](/screenshots/battery_device_list_mqtt-battery_10.png)
+
 ![MQTT Battery - device list - mqtt battery](/screenshots/battery_device_list_mqtt-battery_11.png)
+
 ![MQTT Battery - device list - mqtt battery](/screenshots/battery_device_list_mqtt-battery_12.png)
 
 </details>
