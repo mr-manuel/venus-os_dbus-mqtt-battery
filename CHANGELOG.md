@@ -1,7 +1,9 @@
 # Changelog
 
-## v1.0.10-dev
+## v1.0.10
+⚠️ This version is required for Venus OS v3.60~27 or later, but it is also compatible with older versions.
 * Added: Read data from dbus-serialbattery MQTT JsonData topic
+* Added: paho-mqtt module to driver
 * Changed: Broker port missing on reconnect
 * Changed: Default device instance is now `100`
 * Changed: Fixed service not starting sometimes
