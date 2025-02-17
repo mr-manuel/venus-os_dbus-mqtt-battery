@@ -58,7 +58,7 @@ from ve_utils import wrap_dbus_value, unwrap_dbus_value
 
 # Export ourselves as a D-Bus service.
 class VeDbusService(object):
-	def __init__(self, servicename, bus=None, register=True):
+	def __init__(self, servicename, bus=None, register=None):
 		# dict containing the VeDbusItemExport objects, with their path as the key.
 		self._dbusobjects = {}
 		self._dbusnodes = {}
@@ -79,11 +79,13 @@ class VeDbusService(object):
 		self._dbusnodes['/'] = VeDbusRootExport(self._dbusconn, '/', self)
 
 		# Immediately register the service unless requested not to
-		if register:
+		if register is None:
 			logging.warning("USING OUTDATED REGISTRATION METHOD!")
 			logging.warning("Please set register=False, then call the register method "
 				"after adding all mandatory paths. See "
 				"https://github.com/victronenergy/venus/wiki/dbus-api")
+			self.register()
+		elif register:
 			self.register()
 
 	def register(self):
