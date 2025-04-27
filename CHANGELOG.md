@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.0.11
+* Changed: Fixed crash, when a value is 0 https://github.com/mr-manuel/venus-os_dbus-mqtt-battery/issues/39
+* Removed: GUI removed from installation, separate repository will follow
+
 ## v1.0.10
 ⚠️ This version is required for Venus OS v3.60~27 or later, but it is also compatible with older versions.
 * Added: Read data from dbus-serialbattery MQTT JsonData topic

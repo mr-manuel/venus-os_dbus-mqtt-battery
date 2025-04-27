@@ -377,21 +377,21 @@ def on_message(client, userdata, msg):
                                         for key_3, data_3 in data_2.items():
                                             key = "/" + key_1 + "/" + key_2 + "/" + key_3
                                             if key in battery_dict and (type(data_3) is str or type(data_3) is int or type(data_3) is float):
-                                                battery_dict[key]["value"] = data_3 if data_3 else None
+                                                battery_dict[key]["value"] = data_3 if data_3 is not None else None  # use is not, because 0 is valid
                                             elif key not in ignore_list:
                                                 logging.warning('#3 Received key "' + str(key) + '" with value "' + str(data_3) + '" is not valid')
 
                                     else:
                                         key = "/" + key_1 + "/0/" + key_2
                                         if key in battery_dict and (type(data_2) is str or type(data_2) is int or type(data_2) is float):
-                                            battery_dict[key]["value"] = data_2 if data_2 else None
+                                            battery_dict[key]["value"] = data_2 if data_2 is not None else None  # use is not, because 0 is valid
                                         elif key not in ignore_list:
                                             logging.warning('#2 Received key "' + str(key) + '" with value "' + str(data_2) + '" is not valid')
 
                                 else:
                                     key = "/" + key_1 + "/" + key_2
                                     if key in battery_dict and (type(data_2) is str or type(data_2) is int or type(data_2) is float):
-                                        battery_dict[key]["value"] = data_2 if data_2 else None
+                                        battery_dict[key]["value"] = data_2 if data_2 is not None else None  # use is not, because 0 is valid
                                     elif key not in ignore_list:
                                         logging.warning('#2 Received key "' + str(key) + '" with value "' + str(data_2) + '" is not valid')
 
@@ -399,7 +399,7 @@ def on_message(client, userdata, msg):
 
                             key = "/" + key_1
                             if key in battery_dict and (type(data_1) is str or type(data_1) is int or type(data_1) is float):
-                                battery_dict[key]["value"] = data_1 if data_1 else None
+                                battery_dict[key]["value"] = data_1 if data_1 is not None else None  # use is not, because 0 is valid
                             elif key not in ignore_list:
                                 logging.warning('#1 Received key "' + str(key) + '" with value "' + str(data_1) + '" is not valid')
 
@@ -541,7 +541,7 @@ class DbusMqttBatteryService:
         self._dbusservice.add_path("/ProductId", 0xFFFF)
         self._dbusservice.add_path("/ProductName", productname)
         self._dbusservice.add_path("/CustomName", customname)
-        self._dbusservice.add_path("/FirmwareVersion", "1.0.10 (20250217)")
+        self._dbusservice.add_path("/FirmwareVersion", "1.0.11 (20250427)")
         # self._dbusservice.add_path('/HardwareVersion', '')
         self._dbusservice.add_path("/Connected", 1)
 
