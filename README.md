@@ -216,7 +216,7 @@ To achieve this you need to:
 
 1. Make sure to enable `PUBLISH_BATTERY_DATA_AS_JSON` in the `dbus-serialbattery` [`config.ini`](https://github.com/mr-manuel/venus-os_dbus-serialbattery/blob/f769aebeac3eb7a51b5f9c4e26ac3dd422d42eff/dbus-serialbattery/config.default.ini#L461-L463), since it's disabled by default. Restart `dbus-serialbattery` after you made the changes.
 
-   Now the aggregated data is published to `/N/<VRM_ID>/battery/<BATTERY_INSTANCE>/JsonData` on the Venus OS MQTT broker.
+   Now all battery data for each battery is published to its own topic: `/N/<VRM_ID>/battery/<BATTERY_INSTANCE>/JsonData`. Replace `<VRM_ID>` with your VRM ID and  `<BATTERY_INSTANCE>` with the unique instance ID for that battery (one topic per battery).
 2. In the `config.ini` of `dbus-mqtt-battery` set the Venus MQTT broker and the topic `/N/<VRM_ID>/battery/<BATTERY_INSTANCE>/JsonData` where the data is published.
 
 Replace the placeholders `<...>` with your values.
