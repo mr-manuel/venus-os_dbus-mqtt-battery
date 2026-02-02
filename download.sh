@@ -10,7 +10,7 @@ echo ""
 echo -n "Fetch current version numbers..."
 
 # latest release
-latest_release_stable=$(curl -s https://api.github.com/repos/mr-manuel/venus-os_${driver_name}/releases/latest | grep "tag_name" | cut -d : -f 2,3 | tr -d "\ " | tr -d \" | tr -d \,)
+latest_release_stable=$(curl -s https://api.github.com/repos/mr-manuel/venus-os_${driver_name}/releases/latest | sed -nE 's/.*"tag_name": "([^"]+)".*/\1/p')
 
 # nightly build
 latest_release_nightly=$(curl -s https://raw.githubusercontent.com/mr-manuel/venus-os_${driver_name}/master/${driver_name}/${driver_name}.py | grep FirmwareVersion | awk -F'"' '{print $4}')
