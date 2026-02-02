@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-import sys
 from traceback import print_exc
 from os import _exit as os_exit
 from os import statvfs
@@ -77,11 +76,11 @@ def get_vrm_portal_id():
 	import fcntl, socket, struct, os
 
 	iface = os.environ.get('VRM_IFACE', 'eth0').encode('ascii')
-	s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-	try:
-		info = fcntl.ioctl(s.fileno(), 0x8927,  struct.pack('256s', iface[:15]))
-	except IOError:
-		raise NoVrmPortalIdError("ioctl failed for eth0")
+	with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+		try:
+			info = fcntl.ioctl(s.fileno(), 0x8927,  struct.pack('256s', iface[:15]))
+		except IOError:
+			raise NoVrmPortalIdError("ioctl failed for eth0")
 
 	__vrm_portal_id = info[18:24].hex()
 	return __vrm_portal_id

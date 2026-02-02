@@ -47,6 +47,8 @@ bridge {{
   publish N/{0}/#
   subscribe R/{0}/#
   subscribe W/{0}/#
+  publish   I/{0}/out/#
+  subscribe I/{0}/in/#
   clientid_prefix GXdbus
   remote_username {5}
   remote_password {1}

@@ -5,6 +5,7 @@ from functools import partial
 
 # Local imports
 from vedbus import VeDbusItemImport
+from ve_utils import unwrap_dbus_value, wrap_dbus_value
 
 ## Indexes for the setting dictonary.
 PATH = 0
@@ -12,6 +13,89 @@ VALUE = 1
 MINIMUM = 2
 MAXIMUM = 3
 SILENT = 4
+
+VE_INTERFACE = "com.victronenergy.BusItem"
+
+## VeDbusSettingItem class, our own proxy that's lighter than what dbus-python has
+class VeDbusSettingItem(object):
+	def __new__(cls, bus, serviceName, path, *args, **kwargs):
+		o = object.__new__(cls)
+
+		# This is called once, when the first VeDbusSettingItem is created
+		if "_tracked" not in VeDbusSettingItem.__dict__:
+			VeDbusSettingItem._tracked = {}
+
+			# Track changes on service
+			bus.add_signal_receiver(VeDbusSettingItem._setting_changed_handler,
+				"PropertiesChanged", dbus_interface=VE_INTERFACE,
+				bus_name=serviceName, path_keyword='path')
+			bus.add_signal_receiver(VeDbusSettingItem._items_changed_handler,
+				"ItemsChanged", dbus_interface=VE_INTERFACE,
+				bus_name=serviceName, path="/")
+
+		return o
+
+	@staticmethod
+	def _setting_changed_handler(change, path=None):
+		try:
+			o = VeDbusSettingItem._tracked[path]
+		except KeyError:
+			pass # Not our setting
+		else:
+			o._value = unwrap_dbus_value(change['Value'])
+			try:
+				t = change['Text']
+			except KeyError:
+				t = str(o._value)
+
+			o._callback(o._servicename, o._path, {
+				'Value': o._value, 'Text': t})
+
+	@staticmethod
+	def _items_changed_handler(items):
+		if not isinstance(items, dict):
+			return
+		for path, changes in items.items():
+			try:
+				o = self._tracked[path]
+				v = changes['Value']
+			except KeyError:
+				continue # Not our setting, or no value
+
+			try:
+				t = changes['Text']
+			except KeyError:
+				t = str(unwrap_dbus_value(v))
+
+			o._value = unwrap_dbus_value(v)
+			o._callback(o._servicename, o._path, { 'Value': o._value, 'Text': t})
+
+	def __init__(self, bus, servicename, path, callback, initial_value=None):
+		self._bus = bus
+		self._servicename = servicename
+		self._path = path
+		self._callback = callback
+		self._value = initial_value
+		self._tracked[path] = self
+
+	def __del__(self):
+		try:
+			del self._tracked[self._path]
+		except (AttributeError, KeyError):
+			pass
+
+	def get_value(self):
+		return self._value
+
+	def set_value(self, v):
+		return self._bus.call_blocking(self._servicename, self._path,
+				dbus_interface=VE_INTERFACE, method='SetValue', signature="v",
+				args=[wrap_dbus_value(v)])
+
+	def set_default(self):
+		return self._bus.call_blocking(self._servicename, self._path,
+				dbus_interface=VE_INTERFACE, method='SetDefault', signature="",
+				args=[])
 
 ## The Settings Device class.
 # Used by python programs, such as the vrm-logger, to read and write settings they
@@ -59,12 +143,31 @@ class SettingsDevice(object):
 		logging.debug("===== Settings device init finished =====")
 
 	def addSettings(self, settings):
-		for setting, options in settings.items():
-			silent = len(options) > SILENT and options[SILENT]
-			busitem = self.addSetting(options[PATH], options[VALUE],
-				options[MINIMUM], options[MAXIMUM], silent, callback=partial(self.handleChangedSetting, setting))
-			self._settings[setting] = busitem
-			self._values[setting] = busitem.get_value()
+		# We need a lookup table to map the path back to the setting name/alias
+		lookup = {options[PATH]: setting for setting, options in settings.items()}
+		li = [{
+			"path": options[PATH],
+			"default": options[VALUE],
+			"min": options[MINIMUM],
+			"max": options[MAXIMUM],
+			"silent": len(options) > SILENT and options[SILENT]
+		} for setting, options in settings.items()]
+		result = self._bus.call_blocking(self._dbus_name, '/',
+			'com.victronenergy.Settings', 'AddSettings',
+			'aa{sv}', [li])
+
+		for r in result:
+			if (error := r["error"]) == 0:
+				setting = lookup[r['path']]
+				busitem = VeDbusSettingItem(self._bus, self._dbus_name,
+					r["path"],
+					callback=partial(self.handleChangedSetting, setting),
+					initial_value=unwrap_dbus_value(r['value']))
+				self._settings[setting] = busitem
+				self._values[setting] = busitem.get_value()
+			else:
+				logging.error(f"Failed to add setting {r['path']}, error {error}")
+
 
 	def addSetting(self, path, value, _min, _max, silent=False, callback=None):
 		busitem = VeDbusItemImport(self._bus, self._dbus_name, path, callback)
@@ -105,8 +208,8 @@ class SettingsDevice(object):
 		self._eventCallback(setting, oldvalue, changes['Value'])
 
 	def setDefault(self, path):
-                item = VeDbusItemImport(self._bus, self._dbus_name, path, createsignal=False)
-                item.set_default()
+		item = VeDbusItemImport(self._bus, self._dbus_name, path, createsignal=False)
+		item.set_default()
 
 	def __getitem__(self, setting):
 		return self._settings[setting].get_value()

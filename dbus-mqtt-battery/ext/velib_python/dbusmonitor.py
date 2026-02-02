@@ -19,11 +19,7 @@ from dbus.mainloop.glib import DBusGMainLoop
 from gi.repository import GLib
 import dbus
 import dbus.service
-import inspect
 import logging
-import argparse
-import pprint
-import traceback
 import os
 from collections import defaultdict
 from functools import partial
@@ -84,10 +80,30 @@ class Service(object):
 	def service_class(self):
 		return '.'.join(self.name.split('.')[:3])
 
+class ScanProgress(object):
+	def __init__(self, onfinish):
+		self.services = set()
+		self.errors = set()
+		self.onfinish = onfinish
+
+	def add(self, service):
+		self.services.add(service)
+
+	def complete(self, service):
+		self.services.discard(service)
+		if not self.services and self.onfinish is not None:
+			# services is empty now
+			self.onfinish(list(self.errors))
+
+	def error(self, service):
+		self.errors.add(service)
+		self.complete(service)
+
 class DbusMonitor(object):
 	## Constructor
-	def __init__(self, dbusTree, valueChangedCallback=None, deviceAddedCallback=None,
-					deviceRemovedCallback=None, namespace="com.victronenergy", ignoreServices=[]):
+	def __init__(self, dbusTree, valueChangedCallback=None,
+			deviceAddedCallback=None, deviceRemovedCallback=None,
+			namespace="com.victronenergy", ignoreServices=[]):
 		# valueChangedCallback is the callback that we call when something has changed.
 		# def value_changed_on_dbus(dbusServiceName, dbusPath, options, changes, deviceInstance):
 		# in which changes is a tuple with GetText() and GetValue()
@@ -133,12 +149,15 @@ class DbusMonitor(object):
 			signal_name='ItemsChanged', path='/',
 			sender_keyword='senderId')
 
-		logger.info('===== Search on dbus for services that we will monitor starting... =====')
-		serviceNames = self.dbusConn.list_names()
-		for serviceName in serviceNames:
-			self.scan_dbus_service(serviceName)
+		logger.info('===== Scanning dbus... =====')
+		self._scan_dbus()
 
-		logger.info('===== Search on dbus for services that we will monitor finished =====')
+	def _scan_dbus(self):
+		""" Does the actual scan. Intent is that this can be overridden in
+		    subclasses. """
+		for serviceName in self.wanted_service_names():
+			self.scan_dbus_service(serviceName)
+		logger.info('===== Sync scan complete =====')
 
 	@staticmethod
 	def make_service(serviceId, serviceName, deviceInstance):
@@ -150,18 +169,21 @@ class DbusMonitor(object):
 		return MonitoredValue(unwrap_dbus_value(value), unwrap_dbus_value(text), options)
 
 	def dbus_name_owner_changed(self, name, oldowner, newowner):
-		if not name.startswith("com.victronenergy."):
+		if not self.service_wanted(name):
 			return
 
 		#decouple, and process in main loop
 		GLib.idle_add(exit_on_error, self._process_name_owner_changed, name, oldowner, newowner)
 
+	def _process_newowner(self, name):
+		# Do a sync scan, and call deviceAddedCallback if we have it
+		if self.scan_dbus_service(name) and self.deviceAddedCallback is not None:
+			self.deviceAddedCallback(name, self.get_device_instance(name))
+
 	def _process_name_owner_changed(self, name, oldowner, newowner):
 		if newowner != '':
 			# so we found some new service. Check if we can do something with it.
-			newdeviceadded = self.scan_dbus_service(name)
-			if newdeviceadded and self.deviceAddedCallback is not None:
-				self.deviceAddedCallback(name, self.get_device_instance(name))
+			self._process_newowner(name)
 
 		elif name in self.servicesByName:
 			# it disappeared, we need to remove it.
@@ -176,11 +198,23 @@ class DbusMonitor(object):
 			if self.deviceRemovedCallback is not None:
 				self.deviceRemovedCallback(name, service.deviceInstance)
 
+	def service_wanted(self, serviceName):
+		return not any(
+			serviceName.startswith(x) for x in self.ignoreServices) and (
+			serviceName.startswith('com.victronenergy.')) and (
+			'.'.join(serviceName.split('.')[0:3]) in self.dbusTree)
+
+	def wanted_service_names(self):
+		return [s for s in self.dbusConn.list_names() if self.service_wanted(s)]
+
 	def scan_dbus_service(self, serviceName):
+		# make it a normal string instead of dbus string
+		serviceName = str(serviceName)
 		try:
 			return self.scan_dbus_service_inner(serviceName)
 		except:
 			logger.error("Ignoring %s because of error while scanning:" % (serviceName))
+			import traceback
 			traceback.print_exc()
 			return False
 
@@ -192,27 +226,7 @@ class DbusMonitor(object):
 	# Scans the given dbus service to see if it contains anything interesting for us. If it does, add
 	# it to our list of monitored D-Bus services.
 	def scan_dbus_service_inner(self, serviceName):
-
-		# make it a normal string instead of dbus string
-		serviceName = str(serviceName)
-
-		if (len(self.ignoreServices) != 0 and any(serviceName.startswith(x) for x in self.ignoreServices)):
-			logger.debug("Ignoring service %s" % serviceName)
-			return False
-
-		paths = self.dbusTree.get('.'.join(serviceName.split('.')[0:3]), None)
-		if paths is None:
-			logger.debug("Ignoring service %s, not in the tree" % serviceName)
-			return False
-
 		logger.info("Found: %s, scanning and storing items" % serviceName)
-		serviceId = self.dbusConn.get_name_owner(serviceName)
-
-		# we should never be notified to add a D-Bus service that we already have. If this assertion
-		# raises, check process_name_owner_changed, and D-Bus workings.
-		assert serviceName not in self.servicesByName
-		assert serviceId not in self.servicesById
-
 		# Try to fetch everything with a GetItems, then fall back to older
 		# methods if that fails
 		try:
@@ -220,9 +234,13 @@ class DbusMonitor(object):
 		except dbus.exceptions.DBusException:
 			logger.info("GetItems failed, trying legacy methods")
 		else:
-			return self.scan_dbus_service_getitems_done(serviceName, serviceId, values)
+			serviceId = self.dbusConn.get_name_owner(serviceName)
+			return self.scan_dbus_service_getitems_done(serviceName, serviceId, values) is not None
 
-		if serviceName == 'com.victronenergy.settings' or serviceName == 'com.victronenergy.platform':
+		return self.scan_dbus_service_legacy(serviceName)
+
+	def scan_dbus_service_legacy(self, serviceName):
+		if serviceName in ('com.victronenergy.settings', 'com.victronenergy.platform'):
 			di = 0
 		elif serviceName.startswith('com.victronenergy.vecan.'):
 			di = 0
@@ -237,6 +255,7 @@ class DbusMonitor(object):
 				di = int(di)
 
 		logger.info("       %s has device instance %s" % (serviceName, di))
+		serviceId = self.dbusConn.get_name_owner(serviceName)
 		service = self.make_service(serviceId, serviceName, di)
 
 		# Let's try to fetch everything in one go
@@ -247,6 +266,10 @@ class DbusMonitor(object):
 			texts.update(self.dbusConn.call_blocking(serviceName, '/', VE_INTERFACE, 'GetText', '', []))
 		except:
 			pass
+
+		paths = self.dbusTree.get('.'.join(serviceName.split('.')[0:3]), None)
+		if paths is None:
+			return False
 
 		for path, options in paths.items():
 			# path will be the D-Bus path: '/Ac/ActiveIn/L1/V'
@@ -277,7 +300,6 @@ class DbusMonitor(object):
 
 			service.paths[path] = self.make_monitor(service, path, unwrap_dbus_value(value), unwrap_dbus_value(text), options)
 
-
 		logger.debug("Finished scanning and storing items for %s" % serviceName)
 
 		# Adjust self at the end of the scan, so we don't have an incomplete set of
@@ -299,7 +321,7 @@ class DbusMonitor(object):
 				di = values['/DeviceInstance']['Value']
 			except KeyError:
 				logger.info("       %s was skipped because it has no device instance" % serviceName)
-				return False
+				return None
 			else:
 				di = int(di)
 
@@ -320,7 +342,7 @@ class DbusMonitor(object):
 		self.servicesByName[serviceName] = service
 		self.servicesById[serviceId] = service
 		self.servicesByClass[service.service_class].append(service)
-		return True
+		return di
 
 	def handler_item_changes(self, items, senderId):
 		if not isinstance(items, dict):
@@ -517,6 +539,81 @@ class DbusMonitor(object):
 				signal_name='ItemsChanged',
 				path="/", bus_name=serviceName),
 		))
+
+	def set_device_added_callback(self, callback):
+		""" This allows changing the callback to something else, or to
+		    set it later, eg if you want finish starting before adding a
+		    callback. """
+		self.deviceAddedCallback = callback
+
+class AsyncDbusMonitor(DbusMonitor):
+	def __init__(self, *args, scanCompleteCallback=None, **kwargs):
+		super().__init__(*args, **kwargs)
+		self.scanCompleteCallback = scanCompleteCallback
+
+	def _scan_dbus(self):
+		# Pass True, this is an initial scan triggered at startup
+		self.scan_dbus_services_async(callback=partial(
+			self._async_scan_callback, True))
+
+	def _process_newowner(self, name):
+		self.scan_dbus_services_async(services=(name,),
+			callback=partial(self._async_scan_callback, False))
+
+	def _async_scan_callback(self, startup, errors):
+		# Do a legacy scan on services that could not be scanned with GetItems
+		for name in errors:
+			logging.info(f"Doing legacy scan on {name}")
+			if self.scan_dbus_service_legacy(name) and \
+						  self.deviceAddedCallback is not None:
+				self.deviceAddedCallback(name, self.get_device_instance(name))
+
+		if startup:
+			logger.info('===== Async scan complete =====')
+			if self.scanCompleteCallback is not None:
+				self.scanCompleteCallback(self)
+
+	# Async scan, starting with GetNameOwner and then GetItems
+	def scan_dbus_services_async(self, services=None, callback=None):
+		progress = ScanProgress(callback)
+		for serviceName in services if services else self.wanted_service_names():
+			# Start by getting nameowner
+			progress.add(serviceName)
+			self.get_name_owner_async(progress, serviceName)
+
+	def scan_async_error(error, progress, serviceName, exc):
+		logger.error("Ignoring %s because of error while scanning:" % (serviceName))
+		logger.error(str(exc))
+		# if GetNameOwner fails, there is no point in adding it to error list.
+		# So simply complete() it.
+		progress.complete(serviceName)
+
+	def get_name_owner_async(self, progress, serviceName):
+		self.dbusConn.call_async('org.freedesktop.DBus',
+			'/org/freedesktop/DBus', 'org.freedesktop.DBus', 'GetNameOwner',
+			's', (serviceName, ),
+			partial(self.get_name_owner_async_done, progress, serviceName),
+			partial(self.scan_async_error, progress, serviceName))
+
+	def get_name_owner_async_done(self, progress, serviceName, owner):
+		self.dbusConn.call_async(serviceName, '/', VE_INTERFACE,
+			'GetItems', '', [],
+			partial(self.get_items_async_done, progress, serviceName, owner),
+			partial(self.get_items_async_error, progress, serviceName, owner))
+
+	def get_items_async_done(self, progress, serviceName, owner, values):
+		di = self.scan_dbus_service_getitems_done(serviceName, owner, values)
+		if di is not None:
+			if self.deviceAddedCallback is not None:
+				self.deviceAddedCallback(serviceName, di)
+			progress.complete(serviceName)
+		else:
+			progress.error(serviceName)
+
+	def get_items_async_error(self, progress, serviceName, owner, exc):
+		# Fall back to fetching deviceinstance, and GetValue/GetText
+		# Store item, so it can be scanned later
+		progress.error(serviceName)
 
 
 # ====== ALL CODE BELOW THIS LINE IS PURELY FOR DEVELOPING THIS CLASS ======
