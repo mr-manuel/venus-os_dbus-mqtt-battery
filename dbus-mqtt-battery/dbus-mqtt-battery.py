@@ -165,6 +165,11 @@ battery_dict = {
     "/Info/MaxChargeVoltage": {"value": None, "textformat": _v},
     "/Info/MaxChargeCurrent": {"value": None, "textformat": _a},
     "/Info/MaxDischargeCurrent": {"value": None, "textformat": _a},
+    "/Info/MaxChargeCellVoltage": {"value": None, "textformat": _v3},
+    "/Info/HeatingCurrent": {"value": None, "textformat": _a},
+    "/Info/HeatingPower": {"value": None, "textformat": _w},
+    "/Info/HeatingTemperatureStart": {"value": None, "textformat": _t},
+    "/Info/HeatingTemperatureStop": {"value": None, "textformat": _t},
     # history
     "/History/ChargeCycles": {"value": None, "textformat": _n},
     "/History/MinimumVoltage": {"value": None, "textformat": _v},
@@ -237,10 +242,33 @@ battery_dict = {
     "/Balances/Cell23": {"value": None, "textformat": _n},
     "/Balances/Cell24": {"value": None, "textformat": _n},
     # IO
+    "/Io/AllowToBalance": {"value": None, "textformat": _n},
     "/Io/AllowToCharge": {"value": None, "textformat": _n},
     "/Io/AllowToDischarge": {"value": None, "textformat": _n},
-    "/Io/AllowToBalance": {"value": None, "textformat": _n},
+    "/Io/AllowToHeat": {"value": None, "textformat": _n},
     "/Io/ExternalRelay": {"value": None, "textformat": _n},
+    # Time To Soc
+    "/TimeToSoC/0": {"value": None, "textformat": _s},
+    "/TimeToSoC/5": {"value": None, "textformat": _s},
+    "/TimeToSoC/10": {"value": None, "textformat": _s},
+    "/TimeToSoC/15": {"value": None, "textformat": _s},
+    "/TimeToSoC/20": {"value": None, "textformat": _s},
+    "/TimeToSoC/25": {"value": None, "textformat": _s},
+    "/TimeToSoC/30": {"value": None, "textformat": _s},
+    "/TimeToSoC/35": {"value": None, "textformat": _s},
+    "/TimeToSoC/40": {"value": None, "textformat": _s},
+    "/TimeToSoC/45": {"value": None, "textformat": _s},
+    "/TimeToSoC/50": {"value": None, "textformat": _s},
+    "/TimeToSoC/55": {"value": None, "textformat": _s},
+    "/TimeToSoC/60": {"value": None, "textformat": _s},
+    "/TimeToSoC/65": {"value": None, "textformat": _s},
+    "/TimeToSoC/70": {"value": None, "textformat": _s},
+    "/TimeToSoC/75": {"value": None, "textformat": _s},
+    "/TimeToSoC/80": {"value": None, "textformat": _s},
+    "/TimeToSoC/85": {"value": None, "textformat": _s},
+    "/TimeToSoC/90": {"value": None, "textformat": _s},
+    "/TimeToSoC/95": {"value": None, "textformat": _s},
+    "/TimeToSoC/100": {"value": None, "textformat": _s},
     # EXTRA
     "/Alarms/BmsCable": {"value": None, "textformat": _n},
     "/Alarms/HighCellVoltage": {"value": None, "textformat": _n},
@@ -251,6 +279,7 @@ battery_dict = {
     "/CurrentAvg": {"value": None, "textformat": _a},
     "/Dc/0/MidVoltage": {"value": None, "textformat": _v},
     "/Dc/0/MidVoltageDeviation": {"value": None, "textformat": _v},
+    "/Heating": {"value": None, "textformat": _n},
     "/History/AverageDischarge": {"value": None, "textformat": _n},
     "/History/ChargedEnergy": {"value": None, "textformat": _n},
     "/History/DeepestDischarge": {"value": None, "textformat": _n},
@@ -265,23 +294,24 @@ battery_dict = {
     "/History/MinimumTemperature": {"value": None, "textformat": _n},
     "/History/TimeSinceLastFullCharge": {"value": None, "textformat": _n},
     "/Info/BatteryLowVoltage": {"value": None, "textformat": _n},
-    "/Info/ChargeLimitation": {"value": None, "textformat": _a},
+    "/Info/ChargeLimitation": {"value": None, "textformat": _s},
     "/Info/ChargeMode": {"value": None, "textformat": _s},
-    "/Info/DischargeLimitation": {"value": None, "textformat": _a},
+    "/Info/DischargeLimitation": {"value": None, "textformat": _s},
     "/Io/ForceChargingOff": {"value": None, "textformat": _n},
     "/Io/ForceDischargingOff": {"value": None, "textformat": _n},
     "/Io/TurnBalancingOff": {"value": None, "textformat": _n},
     "/Settings/HasTemperature": {"value": None, "textformat": _n},
     "/SocBms": {"value": None, "textformat": _p},
+    "/Soh": {"value": None, "textformat": _p},
     "/State": {"value": None, "textformat": _n},
     "/System/Temperature1": {"value": None, "textformat": _t},
-    "/System/Temperature1Name": {"value": None, "textformat": _n},
+    "/System/Temperature1Name": {"value": None, "textformat": _s},
     "/System/Temperature2": {"value": None, "textformat": _t},
-    "/System/Temperature2Name": {"value": None, "textformat": _n},
+    "/System/Temperature2Name": {"value": None, "textformat": _s},
     "/System/Temperature3": {"value": None, "textformat": _t},
-    "/System/Temperature3Name": {"value": None, "textformat": _n},
+    "/System/Temperature3Name": {"value": None, "textformat": _s},
     "/System/Temperature4": {"value": None, "textformat": _t},
-    "/System/Temperature4Name": {"value": None, "textformat": _n},
+    "/System/Temperature4Name": {"value": None, "textformat": _s},
 }
 
 ignore_list = [
@@ -305,6 +335,7 @@ ignore_list = [
     "/Info/ChargeModeDebugBulk",
     "/History/CanBeCleared",
     "/History/Clear",
+    "/JsonData",
 ]
 
 
@@ -376,21 +407,21 @@ def on_message(client, userdata, msg):
 
                                         for key_3, data_3 in data_2.items():
                                             key = "/" + key_1 + "/" + key_2 + "/" + key_3
-                                            if key in battery_dict and (type(data_3) is str or type(data_3) is int or type(data_3) is float):
+                                            if key in battery_dict and (type(data_3) is str or type(data_3) is int or type(data_3) is float or data_3 is None):
                                                 battery_dict[key]["value"] = data_3 if data_3 is not None else None  # use is not, because 0 is valid
                                             elif key not in ignore_list:
                                                 logging.warning('#3 Received key "' + str(key) + '" with value "' + str(data_3) + '" is not valid')
 
                                     else:
                                         key = "/" + key_1 + "/0/" + key_2
-                                        if key in battery_dict and (type(data_2) is str or type(data_2) is int or type(data_2) is float):
+                                        if key in battery_dict and (type(data_2) is str or type(data_2) is int or type(data_2) is float or data_2 is None):
                                             battery_dict[key]["value"] = data_2 if data_2 is not None else None  # use is not, because 0 is valid
                                         elif key not in ignore_list:
                                             logging.warning('#2 Received key "' + str(key) + '" with value "' + str(data_2) + '" is not valid')
 
                                 else:
                                     key = "/" + key_1 + "/" + key_2
-                                    if key in battery_dict and (type(data_2) is str or type(data_2) is int or type(data_2) is float):
+                                    if key in battery_dict and (type(data_2) is str or type(data_2) is int or type(data_2) is float or data_2 is None):
                                         battery_dict[key]["value"] = data_2 if data_2 is not None else None  # use is not, because 0 is valid
                                     elif key not in ignore_list:
                                         logging.warning('#2 Received key "' + str(key) + '" with value "' + str(data_2) + '" is not valid')
@@ -398,7 +429,7 @@ def on_message(client, userdata, msg):
                         else:
 
                             key = "/" + key_1
-                            if key in battery_dict and (type(data_1) is str or type(data_1) is int or type(data_1) is float):
+                            if key in battery_dict and (type(data_1) is str or type(data_1) is int or type(data_1) is float or data_1 is None):
                                 battery_dict[key]["value"] = data_1 if data_1 is not None else None  # use is not, because 0 is valid
                             elif key not in ignore_list:
                                 logging.warning('#1 Received key "' + str(key) + '" with value "' + str(data_1) + '" is not valid')
@@ -524,7 +555,6 @@ class DbusMqttBatteryService:
     ):
 
         self._dbusservice = VeDbusService(servicename, register=False)
-        self._paths = paths
 
         logging.debug("%s /DeviceInstance = %d" % (servicename, deviceinstance))
 
@@ -541,13 +571,13 @@ class DbusMqttBatteryService:
         self._dbusservice.add_path("/ProductId", 0xFFFF)
         self._dbusservice.add_path("/ProductName", productname)
         self._dbusservice.add_path("/CustomName", customname)
-        self._dbusservice.add_path("/FirmwareVersion", "1.0.11 (20250427)")
+        self._dbusservice.add_path("/FirmwareVersion", "1.0.12 (20260202)")
         # self._dbusservice.add_path('/HardwareVersion', '')
         self._dbusservice.add_path("/Connected", 1)
 
         self._dbusservice.add_path("/Latency", None)
 
-        for path, settings in self._paths.items():
+        for path, settings in paths.items():
             self._dbusservice.add_path(
                 path,
                 settings["value"],
@@ -584,7 +614,7 @@ class DbusMqttBatteryService:
                     line = exception_traceback.tb_lineno
                     logging.error(f"Exception occurred: {repr(exception_object)} of type {exception_type} in {file} line #{line}")
 
-            logging.info("Battery SoC: {:.2f} V - {:.2f} %".format(battery_dict["/Dc/0/Power"]["value"], battery_dict["/Soc"]["value"]))
+            logging.info("Battery: {:.0f} W - {:.2f} V - {:.2f} %".format(battery_dict["/Dc/0/Power"]["value"], battery_dict["/Dc/0/Voltage"]["value"], battery_dict["/Soc"]["value"]))
 
             last_updated = last_changed
 

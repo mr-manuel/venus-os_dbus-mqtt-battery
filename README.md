@@ -96,6 +96,7 @@ Please remove the `--> *` comments to get a valid `JSON`. Comments are not allow
     "ConsumedAmphours": 74.5,                 --> Ampere hours - consumed (only positive values) - if missing in the JSON, than gets calculated when "InstalledCapacity" and "Capacity" are set OR only "InstalledCapacity" is set
     "Capacity": 125.5,                        --> Ampere hours - remaining (only positive values) - if missing in the JSON, than gets calculated when "InstalledCapacity" and "ConsumedAmphours" are set OR only "InstalledCapacity" is set
     "Soc": 63,                                --> Percent (0-100) - state of charge
+    "Soh": 98,                                --> Percent (0-100) - state of health
     "TimeToGo": 43967,                        --> Seconds - time until the battery is empty - if missing in the JSON, than gets calculated when "Capacity" is set or calculated
     "Balancing": 0,                           --> Int - 0 = inactive; 1 = active
     "SystemSwitch": 0,                        --> Int - 0 = disabled; 1 = enabled
@@ -118,7 +119,12 @@ Please remove the `--> *` comments to get a valid `JSON`. Comments are not allow
         "ChargeRequest": 0,                   --> Int - 0 = inactive; 1 = active
         "MaxChargeVoltage": 55.2,             --> Volt - Maximum loading voltage that the MultiPlus/Quattro should use
         "MaxChargeCurrent": 80.0,             --> Ampere - Maximum charge current that the MultiPlus/Quattro should use
-        "MaxDischargeCurrent": 120.0          --> Ampere - Maximum discharge current that the MultiPlus/Quattro should use
+        "MaxDischargeCurrent": 120.0,         --> Ampere - Maximum discharge current that the MultiPlus/Quattro should use
+        "MaxChargeCellVoltage": 3.65,         --> Volt - Maximum cell voltage for charging
+        "HeatingCurrent": 10.0,               --> Ampere - Current used for heating
+        "HeatingPower": 120.0,                --> Watt - Power used for heating
+        "HeatingTemperatureStart": 5.0,       --> Celsius - Temperature to start heating
+        "HeatingTemperatureStop": 10.0        --> Celsius - Temperature to stop heating
     },
     "History": {
         "ChargeCycles": 5,                    --> Number - cycles for complete battery lifetime
@@ -201,7 +207,32 @@ Please remove the `--> *` comments to get a valid `JSON`. Comments are not allow
         "AllowToCharge": 0,                   --> Int - 0 = disabled; 1 = enabled
         "AllowToDischarge": 0,                --> Int - 0 = disabled; 1 = enabled
         "AllowToBalance": 0,                  --> Int - 0 = disabled; 1 = enabled
+        "AllowToHeat": 0,                     --> Int - 0 = disabled; 1 = enabled
         "ExternalRelay": 0                    --> Int - 0 = disabled; 1 = enabled
+    },
+    "Heating": 0,                             --> Int - 0 = inactive; 1 = heating active
+    "TimeToSoC": {                            --> Object - time to reach certain SoC levels (in seconds)
+        "0": 0,
+        "5": 0,
+        "10": 0,
+        "15": 0,
+        "20": 0,
+        "25": 0,
+        "30": 0,
+        "35": 0,
+        "40": 0,
+        "45": 0,
+        "50": 0,
+        "55": 0,
+        "60": 0,
+        "65": 0,
+        "70": 0,
+        "75": 0,
+        "80": 0,
+        "85": 0,
+        "90": 0,
+        "95": 0,
+        "100": 0
     }
 }
 ```

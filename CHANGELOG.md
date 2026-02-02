@@ -1,5 +1,8 @@
 # Changelog
 
+## v1.0.12
+* Added: New battery parameters
+
 ## v1.0.11
 * Changed: Fixed crash, when a value is 0 https://github.com/mr-manuel/venus-os_dbus-mqtt-battery/issues/39
 * Removed: GUI removed from installation, separate repository will follow
